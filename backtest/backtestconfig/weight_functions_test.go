@@ -6,6 +6,7 @@ import (
 )
 
 var (
-	_ backtest.PolicyWeightsFunc = backtestconfig.ConstantWeights{}.PolicyWeights
-	_ backtest.PolicyWeightsFunc = backtestconfig.EqualWeights{}.PolicyWeights
+	_ backtest.PolicyWeightCalculator = backtestconfig.ConstantWeights{}
+	_ backtest.PolicyWeightCalculator = backtestconfig.EqualWeights{}
+	_ backtest.PolicyWeightCalculator = backtestconfig.PolicyWeightCalculatorFunc(nil)
 )

@@ -16,15 +16,17 @@ const (
 )
 
 type (
-	PolicyWeightsFunc func(ctx context.Context, t time.Time, assetReturns returns.Table, currentWeights []float64) (targetWeights []float64, err error)
-	WindowFunc        func(today time.Time, table returns.Table) returns.Table
-	TriggerFunc       func(t time.Time, currentWeights []float64) bool
+	PolicyWeightCalculator interface {
+		PolicyWeights(ctx context.Context, today time.Time, assets returns.Table, currentWeights []float64) ([]float64, error)
+	}
+	WindowFunc  func(today time.Time, table returns.Table) returns.Table
+	TriggerFunc func(t time.Time, currentWeights []float64) bool
 )
 
 // Run runs a portfolio back-test. It calls function parameters for policy updates and to check
 // when a policy update or rebalancing is required. Generally you should call Run or RunWithFullData.
 func Run(ctx context.Context, end, start time.Time, assetReturns returns.Table,
-	calculatePolicy PolicyWeightsFunc,
+	alg PolicyWeightCalculator,
 	lookBackWindow WindowFunc,
 	shouldCalculatePolicy,
 	shouldRebalanceAssetWeights TriggerFunc,
@@ -38,7 +40,7 @@ func Run(ctx context.Context, end, start time.Time, assetReturns returns.Table,
 		return Result{}, ErrorNotEnoughData{}
 	}
 
-	firstPolicyDate, policyWeights, err := fetchPolicy(ctx, end, start, calculatePolicy, assetReturns, lookBackWindow)
+	firstPolicyDate, policyWeights, err := fetchPolicy(ctx, end, start, alg, assetReturns, lookBackWindow)
 	if err != nil {
 		return Result{}, err
 	}
@@ -83,7 +85,7 @@ func Run(ctx context.Context, end, start time.Time, assetReturns returns.Table,
 
 		if shouldCalculatePolicy(today, updatedDailyWeights) && start != today {
 			var err error
-			policyWeights, err = calculatePolicy(ctx, today, historicReturns, updatedWeights)
+			policyWeights, err = alg.PolicyWeights(ctx, today, historicReturns, updatedWeights)
 			if err != nil {
 				return Result{}, err
 			}
@@ -152,7 +154,7 @@ func reverseInPlace[E any](s []E) {
 	}
 }
 
-func fetchPolicy(ctx context.Context, end, start time.Time, calculatePolicy PolicyWeightsFunc, assetReturns returns.Table, window WindowFunc) (time.Time, []float64, error) {
+func fetchPolicy(ctx context.Context, end, start time.Time, alg PolicyWeightCalculator, assetReturns returns.Table, window WindowFunc) (time.Time, []float64, error) {
 	ws := make([]float64, assetReturns.NumberOfColumns())
 
 	var historicReturns returns.Table
@@ -175,7 +177,7 @@ func fetchPolicy(ctx context.Context, end, start time.Time, calculatePolicy Poli
 
 		setFloat64Slice(ws, 0)
 
-		policyWeights, err := calculatePolicy(ctx, today, historicReturns, ws)
+		policyWeights, err := alg.PolicyWeights(ctx, today, historicReturns, ws)
 		if err != nil {
 			if errors.Is(err, ErrorNotEnoughData{}) {
 				continue

@@ -37,7 +37,7 @@ func TestSpec_Run(t *testing.T) {
 	})
 	t.Run("end date does not have a return", func(t *testing.T) {
 
-		policyWeightFunc := backtestconfig.EqualWeights{}.PolicyWeights
+		alg := backtestconfig.EqualWeights{}
 		windowFunc := backtestconfig.WindowNotSet.Function
 		rebalanceIntervalFunc := backtestconfig.IntervalDaily.CheckFunction()
 		policyUpdateIntervalFunc := backtestconfig.IntervalDaily.CheckFunction()
@@ -49,21 +49,21 @@ func TestSpec_Run(t *testing.T) {
 		start := assets.FirstTime()
 		end := date("2020-01-03")
 
-		_, err := backtest.Run(context.Background(), end, start, assets, policyWeightFunc, windowFunc, rebalanceIntervalFunc, policyUpdateIntervalFunc)
+		_, err := backtest.Run(context.Background(), end, start, assets, alg, windowFunc, rebalanceIntervalFunc, policyUpdateIntervalFunc)
 		assert.Error(t, err)
 	})
 	t.Run("with no returns", func(t *testing.T) {
 
 		assets := returns.Table{}
 
-		policyWeightFunc := backtestconfig.EqualWeights{}.PolicyWeights
+		alg := backtestconfig.EqualWeights{}
 		windowFunc := backtestconfig.WindowNotSet.Function
 		rebalanceIntervalFunc := backtestconfig.IntervalDaily.CheckFunction()
 		policyUpdateIntervalFunc := backtestconfig.IntervalDaily.CheckFunction()
 
 		end, start := time.Time{}, time.Time{}
 
-		result, err := backtest.Run(context.Background(), end, start, assets, policyWeightFunc, windowFunc, rebalanceIntervalFunc, policyUpdateIntervalFunc)
+		result, err := backtest.Run(context.Background(), end, start, assets, alg, windowFunc, rebalanceIntervalFunc, policyUpdateIntervalFunc)
 		assert.Error(t, err)
 
 		assert.Equal(t, result.ReturnsTable.NumberOfRows(), 0)
@@ -71,7 +71,7 @@ func TestSpec_Run(t *testing.T) {
 
 	t.Run("when there is one asset", func(t *testing.T) {
 
-		policyWeightFunc := backtestconfig.EqualWeights{}.PolicyWeights
+		alg := backtestconfig.EqualWeights{}
 		windowFunc := backtestconfig.OneDayWindow.Function
 		rebalanceIntervalFunc := backtestconfig.IntervalDaily.CheckFunction()
 		policyUpdateIntervalFunc := backtestconfig.IntervalDaily.CheckFunction()
@@ -85,7 +85,7 @@ func TestSpec_Run(t *testing.T) {
 		assets := returns.NewTable([]returns.List{asset})
 		end, start, _ := assets.EndAndStartDates()
 
-		result, err := backtest.Run(context.Background(), end, start, assets, policyWeightFunc, windowFunc, rebalanceIntervalFunc, policyUpdateIntervalFunc)
+		result, err := backtest.Run(context.Background(), end, start, assets, alg, windowFunc, rebalanceIntervalFunc, policyUpdateIntervalFunc)
 
 		assert.NoError(t, err)
 
@@ -110,16 +110,16 @@ func TestSpec_Run(t *testing.T) {
 			<-c
 			cancel()
 		}()
-		policyWeightFunc := func(ctx context.Context, _ time.Time, _ returns.Table, ws []float64) (targetWeights []float64, err error) {
+		alg := backtestconfig.PolicyWeightCalculatorFunc(func(ctx context.Context, _ time.Time, _ returns.Table, ws []float64) (targetWeights []float64, err error) {
 			close(c)
 			<-ctx.Done()
 			return ws, ctx.Err()
-		}
+		})
 		windowFunc := backtestconfig.OneDayWindow.Function
 		rebalanceIntervalFunc := backtestconfig.IntervalDaily.CheckFunction()
 		policyUpdateIntervalFunc := backtestconfig.IntervalDaily.CheckFunction()
 
-		_, err = backtest.Run(ctx, end, start, assets, policyWeightFunc, windowFunc, rebalanceIntervalFunc, policyUpdateIntervalFunc)
+		_, err = backtest.Run(ctx, end, start, assets, alg, windowFunc, rebalanceIntervalFunc, policyUpdateIntervalFunc)
 
 		assert.Equal(t, err, context.Canceled)
 	})
@@ -146,13 +146,13 @@ func TestSpec_Run(t *testing.T) {
 		}
 		assets := returns.NewTable([]returns.List{asset1, asset2})
 
-		policyWeightFunc := backtestconfig.EqualWeights{}.PolicyWeights
+		alg := backtestconfig.EqualWeights{}
 		windowFunc := backtestconfig.OneDayWindow.Function
 		rebalanceIntervalFunc := backtestconfig.IntervalDaily.CheckFunction()
 		policyUpdateIntervalFunc := backtestconfig.IntervalDaily.CheckFunction()
 
 		end, start, _ := assets.EndAndStartDates()
-		result, err := backtest.Run(context.Background(), end, start, assets, policyWeightFunc, windowFunc, rebalanceIntervalFunc, policyUpdateIntervalFunc)
+		result, err := backtest.Run(context.Background(), end, start, assets, alg, windowFunc, rebalanceIntervalFunc, policyUpdateIntervalFunc)
 
 		assert.NoError(t, err)
 		values := result.Returns().Values()
@@ -182,18 +182,18 @@ func TestSpec_Run(t *testing.T) {
 		}
 		assets := returns.NewTable([]returns.List{asset1, asset2})
 
-		policyWeightFunc := func(ctx context.Context, t time.Time, assetReturns returns.Table, currentWeights []float64) ([]float64, error) {
+		alg := backtestconfig.PolicyWeightCalculatorFunc(func(ctx context.Context, t time.Time, assetReturns returns.Table, currentWeights []float64) ([]float64, error) {
 			if t.Before(date("2021-04-20")) {
 				return nil, backtest.ErrorNotEnoughData{}
 			}
 			return backtestconfig.EqualWeights{}.PolicyWeights(ctx, t, assetReturns, currentWeights)
-		}
+		})
 		windowFunc := backtestconfig.WindowNotSet.Function
 		rebalanceIntervalFunc := backtestconfig.IntervalDaily.CheckFunction()
 		policyUpdateIntervalFunc := backtestconfig.IntervalDaily.CheckFunction()
 
 		end, start, _ := assets.EndAndStartDates()
-		result, err := backtest.Run(context.Background(), end, start, assets, policyWeightFunc, windowFunc, rebalanceIntervalFunc, policyUpdateIntervalFunc)
+		result, err := backtest.Run(context.Background(), end, start, assets, alg, windowFunc, rebalanceIntervalFunc, policyUpdateIntervalFunc)
 
 		assert.NoError(t, err)
 
@@ -225,13 +225,13 @@ func TestSpec_Run(t *testing.T) {
 		}
 		assets := returns.NewTable([]returns.List{asset1, asset2})
 
-		policyWeightFunc := backtestconfig.EqualWeights{}.PolicyWeights
+		alg := backtestconfig.EqualWeights{}
 		windowFunc := backtestconfig.OneWeekWindow.Function
 		rebalanceIntervalFunc := backtestconfig.IntervalDaily.CheckFunction()
 		policyUpdateIntervalFunc := backtestconfig.IntervalDaily.CheckFunction()
 
 		end, start, _ := assets.EndAndStartDates()
-		result, err := backtest.Run(context.Background(), end, start, assets, policyWeightFunc, windowFunc, rebalanceIntervalFunc, policyUpdateIntervalFunc)
+		result, err := backtest.Run(context.Background(), end, start, assets, alg, windowFunc, rebalanceIntervalFunc, policyUpdateIntervalFunc)
 
 		assert.NoError(t, err)
 
@@ -263,7 +263,7 @@ func TestSpec_Run(t *testing.T) {
 		}
 
 		callCount := 0
-		policyWeightFunc := func(_ context.Context, tm time.Time, assetReturns returns.Table, currentWeights []float64) ([]float64, error) {
+		alg := backtestconfig.PolicyWeightCalculatorFunc(func(_ context.Context, tm time.Time, assetReturns returns.Table, currentWeights []float64) ([]float64, error) {
 			callCount++
 			assert.Equalf(t, assetReturns.NumberOfColumns(), 1, "call count %d", callCount)
 			for c := 0; c < assetReturns.NumberOfColumns(); c++ {
@@ -297,7 +297,7 @@ func TestSpec_Run(t *testing.T) {
 				assert.Lenf(t, rs, 5, "call count %d", callCount)
 			}
 			return backtestconfig.EqualWeights{}.PolicyWeights(context.Background(), tm, assetReturns, currentWeights)
-		}
+		})
 
 		windowFunc := backtestconfig.OneWeekWindow.Function
 		rebalanceIntervalFunc := backtestconfig.IntervalDaily.CheckFunction()
@@ -307,7 +307,7 @@ func TestSpec_Run(t *testing.T) {
 		end, start, _ := assets.EndAndStartDates()
 		start = backtestconfig.OneWeekWindow.Add(start)
 		result, err := backtest.Run(context.Background(), end, start, assets,
-			policyWeightFunc,
+			alg,
 			windowFunc,
 			rebalanceIntervalFunc,
 			policyUpdateIntervalFunc,
@@ -340,14 +340,14 @@ func TestSpec_Run_weightHistory(t *testing.T) {
 
 		assets := returns.NewTable([]returns.List{asset})
 
-		policyWeightFunc := randomWeights
+		alg := backtestconfig.PolicyWeightCalculatorFunc(randomWeights)
 		windowFunc := backtestconfig.WindowNotSet.Function
 		rebalanceIntervalFunc := backtestconfig.IntervalDaily.CheckFunction()
 		policyUpdateIntervalFunc := backtestconfig.IntervalDaily.CheckFunction()
 
 		end, start, _ := assets.EndAndStartDates()
 
-		result, err := backtest.Run(context.Background(), end, start, assets, policyWeightFunc, windowFunc, policyUpdateIntervalFunc, rebalanceIntervalFunc)
+		result, err := backtest.Run(context.Background(), end, start, assets, alg, windowFunc, policyUpdateIntervalFunc, rebalanceIntervalFunc)
 
 		assert.NoError(t, err)
 
@@ -431,13 +431,13 @@ func TestSpec_Run_weightHistory(t *testing.T) {
 		}
 		assets := returns.NewTable([]returns.List{asset1, asset2})
 
-		policyWeightFunc := backtestconfig.EqualWeights{}.PolicyWeights
+		alg := backtestconfig.EqualWeights{}
 		windowFunc := backtestconfig.WindowNotSet.Function
 		rebalanceIntervalFunc := backtestconfig.IntervalWeekly.CheckFunction()
 		policyUpdateIntervalFunc := backtestconfig.IntervalMonthly.CheckFunction()
 
 		end, start, _ := assets.EndAndStartDates()
-		result, err := backtest.Run(context.Background(), end, start, assets, policyWeightFunc, windowFunc, policyUpdateIntervalFunc, rebalanceIntervalFunc)
+		result, err := backtest.Run(context.Background(), end, start, assets, alg, windowFunc, policyUpdateIntervalFunc, rebalanceIntervalFunc)
 
 		assert.NoError(t, err)
 
@@ -487,13 +487,13 @@ func TestSpec_Run_weightHistory(t *testing.T) {
 		}
 		assets := returns.NewTable([]returns.List{asset1, asset2})
 
-		policyWeightFunc := backtestconfig.EqualWeights{}.PolicyWeights
+		alg := backtestconfig.EqualWeights{}
 		windowFunc := backtestconfig.WindowNotSet.Function
 		rebalanceIntervalFunc := backtestconfig.IntervalDaily.CheckFunction()
 		policyUpdateIntervalFunc := backtestconfig.IntervalWeekly.CheckFunction()
 
 		end, start, _ := assets.EndAndStartDates()
-		result, err := backtest.Run(context.Background(), end, start, assets, policyWeightFunc, windowFunc, policyUpdateIntervalFunc, rebalanceIntervalFunc)
+		result, err := backtest.Run(context.Background(), end, start, assets, alg, windowFunc, policyUpdateIntervalFunc, rebalanceIntervalFunc)
 
 		assert.NoError(t, err)
 
