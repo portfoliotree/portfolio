@@ -9,9 +9,12 @@ on:
   pull_request:
 
 jobs:
-
-  Test:
-    runs-on: ubuntu-latest
+  build_and_test:
+    name: Build and Test
+    strategy:
+      matrix:
+        os: [ ubuntu-latest, windows-latest ]
+    runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v3
 
