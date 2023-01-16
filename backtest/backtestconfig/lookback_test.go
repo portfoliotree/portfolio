@@ -3,15 +3,13 @@ package backtestconfig_test
 import (
 	"testing"
 
-	. "github.com/onsi/gomega"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/portfoliotree/portfolio/backtest/backtestconfig"
 	"github.com/portfoliotree/portfolio/returns"
 )
 
 func TestNamedDuration_TruncateWithLookBack(t *testing.T) {
-	please := NewWithT(t)
-
 	everyOtherWednesday := returns.List{
 		{Time: date("2021-12-22")},
 		{Time: date("2021-12-08")},
@@ -68,45 +66,34 @@ func TestNamedDuration_TruncateWithLookBack(t *testing.T) {
 		{Time: date("2020-01-08")},
 	}
 
-	please.Expect(
+	assert.Equal(t,
 		backtestconfig.TruncateWithLookBack(
 			date("2021-08-18"), date("2021-08-04"),
 			backtestconfig.OneDayWindow, everyOtherWednesday,
 		).Times(),
-	).To(
-		Equal(everyOtherWednesday.Between(date("2021-08-18"), date("2021-07-21")).Times()),
-	)
+		everyOtherWednesday.Between(date("2021-08-18"), date("2021-07-21")).Times())
 
-	please.Expect(
+	assert.Equal(t,
 		backtestconfig.TruncateWithLookBack(
 			date("2020-12-30"), date("2020-12-23"),
 			backtestconfig.OneMonthWindow, everyOtherWednesday,
 		).Times(),
-	).To(
-		Equal(everyOtherWednesday.Between(
-			date("2020-12-30"), date("2020-11-11")).Times(),
-		),
+		everyOtherWednesday.Between(date("2020-12-30"), date("2020-11-11")).Times(),
 	)
 
-	please.Expect(
+	assert.Equal(t,
 		backtestconfig.TruncateWithLookBack(
 			date("2021-09-04"), date("2021-08-04"),
 			backtestconfig.OneQuarterWindow, everyOtherWednesday,
 		).Times(),
-	).To(
-		Equal(everyOtherWednesday.Between(
-			date("2021-09-04"), date("2021-04-28")).Times(),
-		),
+		everyOtherWednesday.Between(date("2021-09-04"), date("2021-04-28")).Times(),
 	)
 
-	please.Expect(
+	assert.Equal(t,
 		backtestconfig.TruncateWithLookBack(
 			date("2020-06-01"), date("2020-05-27"),
 			backtestconfig.OneYearWindow, everyOtherWednesday,
 		).Times(),
-	).To(
-		Equal(everyOtherWednesday.Between(
-			date("2020-06-01"), date("2020-01-08")).Times(),
-		),
+		everyOtherWednesday.Between(date("2020-06-01"), date("2020-01-08")).Times(),
 	)
 }

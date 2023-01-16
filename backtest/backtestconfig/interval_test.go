@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	. "github.com/onsi/gomega"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/portfoliotree/portfolio/backtest"
 	"github.com/portfoliotree/portfolio/backtest/backtestconfig"
@@ -15,28 +15,23 @@ var _ backtest.TriggerFunc = backtestconfig.IntervalDaily.CheckFunction()
 func TestNamedInterval_CheckFunc(t *testing.T) {
 	for _, interval := range backtestconfig.Intervals() {
 		t.Run(interval.String(), func(t *testing.T) {
-			o := NewWithT(t)
 			fn := interval.CheckFunction()
-			o.Expect(fn).NotTo(BeNil())
+			assert.NotNil(t, fn)
 		})
 	}
 
 	t.Run("not set", func(t *testing.T) {
-		o := NewWithT(t)
 		fn := backtestconfig.Interval("").CheckFunction()
-		o.Expect(fn).NotTo(BeNil())
+		assert.NotNil(t, fn)
 	})
 
 	t.Run("Cat", func(t *testing.T) {
-		o := NewWithT(t)
 		fn := backtestconfig.Interval("Cat").CheckFunction()
-		o.Expect(fn).NotTo(BeNil())
+		assert.NotNil(t, fn)
 	})
 }
 
 func TestDaily(t *testing.T) {
-	please := NewWithT(t)
-
 	fn := backtestconfig.Daily()
 
 	tm := date("2020-03-01")
@@ -51,12 +46,10 @@ func TestDaily(t *testing.T) {
 		tm = tm.AddDate(0, 0, 1)
 	}
 
-	please.Expect(trueCount).To(Equal(31))
+	assert.Equal(t, trueCount, 31)
 }
 
 func TestWeekly(t *testing.T) {
-	please := NewWithT(t)
-
 	fn := backtestconfig.Weekly()
 
 	tm := date("2020-03-03")
@@ -71,12 +64,10 @@ func TestWeekly(t *testing.T) {
 		tm = tm.AddDate(0, 0, 1)
 	}
 
-	please.Expect(trueCount).To(Equal(4))
+	assert.Equal(t, trueCount, 4)
 }
 
 func TestMonthly(t *testing.T) {
-	please := NewWithT(t)
-
 	fn := backtestconfig.Monthly()
 
 	tm := date("2020-03-03")
@@ -91,12 +82,10 @@ func TestMonthly(t *testing.T) {
 		tm = tm.AddDate(0, 0, 1)
 	}
 
-	please.Expect(trueCount).To(Equal(13))
+	assert.Equal(t, trueCount, 13)
 }
 
 func TestQuarterly(t *testing.T) {
-	please := NewWithT(t)
-
 	fn := backtestconfig.Quarterly()
 
 	tm := date("2018-01-02")
@@ -111,12 +100,10 @@ func TestQuarterly(t *testing.T) {
 		tm = tm.AddDate(0, 0, 1)
 	}
 
-	please.Expect(trueCount).To(Equal(10))
+	assert.Equal(t, trueCount, 10)
 }
 
 func TestAnnually(t *testing.T) {
-	please := NewWithT(t)
-
 	fn := backtestconfig.Annually()
 
 	tm := date("2015-01-02")
@@ -131,7 +118,7 @@ func TestAnnually(t *testing.T) {
 		tm = tm.AddDate(0, 0, 1)
 	}
 
-	please.Expect(trueCount).To(Equal(6))
+	assert.Equal(t, trueCount, 6)
 }
 
 func date(str string) time.Time {

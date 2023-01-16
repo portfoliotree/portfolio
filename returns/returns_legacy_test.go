@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	. "github.com/onsi/gomega"
+	"github.com/stretchr/testify/assert"
 	"gonum.org/v1/gonum/mat"
 
 	"github.com/portfoliotree/portfolio/internal/fixtures"
@@ -19,30 +19,22 @@ import (
 
 func TestReturns(t *testing.T) {
 	t.Run("Risk", func(t *testing.T) {
-		o := NewWithT(t)
-
 		table := returns.List{{Value: 1}, {Value: .5}, {Value: 1.5}}
-
-		o.Expect(table.Risk()).To(Equal(0.5))
+		assert.Equal(t, table.Risk(), 0.5)
 	})
 
 	t.Run("Len", func(t *testing.T) {
-		o := NewWithT(t)
-
 		table := returns.List{{Value: 1}, {Value: 1}, {Value: 1}, {Value: 1}}
-		o.Expect(table.Len()).To(Equal(4))
+		assert.Equal(t, table.Len(), 4)
 	})
 
 	t.Run("returns.Table", func(t *testing.T) {
-		o := NewWithT(t)
-
 		table := returns.List{{Value: 1}, {Value: 1}, {Value: 1}, {Value: 1}}
-		o.Expect(table.Returns().Values()).To(Equal([]float64{1, 1, 1, 1}))
+		assert.Equal(t, table.Returns().Values(), []float64{1, 1, 1, 1})
 	})
 }
 
 func TestReturns_FirstAndLastPeriod(t *testing.T) {
-	o := NewWithT(t)
 
 	rs := returns.List{
 		{2, date("2020-01-04")},
@@ -51,9 +43,9 @@ func TestReturns_FirstAndLastPeriod(t *testing.T) {
 	}
 
 	end, start, err := rs.EndAndStartDate()
-	o.Expect(err).NotTo(HaveOccurred())
-	o.Expect(start).To(Equal(date("2020-01-02")))
-	o.Expect(end).To(Equal(date("2020-01-04")))
+	assert.NoError(t, err)
+	assert.Equal(t, start, date("2020-01-02"))
+	assert.Equal(t, end, date("2020-01-04"))
 }
 
 func toSlices(dense *mat.Dense) [][]float64 {
@@ -68,27 +60,31 @@ func toSlices(dense *mat.Dense) [][]float64 {
 
 func TestComposite_correlationMatrix(t *testing.T) {
 	t.Run("perfectly positively correlated", func(t *testing.T) {
-		o := NewWithT(t)
 
-		o.Expect(toSlices(returns.NewTable([]returns.List{
-			{{Time: fixtures.T(t, fixtures.Day3), Value: 10}, {Time: fixtures.T(t, fixtures.Day2), Value: 20}, {Time: fixtures.T(t, fixtures.Day1), Value: 10}, {Time: fixtures.T(t, fixtures.Day0), Value: 20}},
-			{{Time: fixtures.T(t, fixtures.Day3), Value: 10}, {Time: fixtures.T(t, fixtures.Day2), Value: 20}, {Time: fixtures.T(t, fixtures.Day1), Value: 10}, {Time: fixtures.T(t, fixtures.Day0), Value: 20}},
-		}).CorrelationMatrix())).To(Equal([][]float64{
-			{1, 1},
-			{1, 1},
-		}))
+		assert.Equal(t,
+			toSlices(returns.NewTable([]returns.List{
+				{{Time: fixtures.T(t, fixtures.Day3), Value: 10}, {Time: fixtures.T(t, fixtures.Day2), Value: 20}, {Time: fixtures.T(t, fixtures.Day1), Value: 10}, {Time: fixtures.T(t, fixtures.Day0), Value: 20}},
+				{{Time: fixtures.T(t, fixtures.Day3), Value: 10}, {Time: fixtures.T(t, fixtures.Day2), Value: 20}, {Time: fixtures.T(t, fixtures.Day1), Value: 10}, {Time: fixtures.T(t, fixtures.Day0), Value: 20}},
+			}).CorrelationMatrix()),
+			[][]float64{
+				{1, 1},
+				{1, 1},
+			},
+		)
 	})
 
 	t.Run("perfectly negatively correlated", func(t *testing.T) {
-		o := NewWithT(t)
 
-		o.Expect(toSlices(returns.NewTable([]returns.List{
-			{{Time: fixtures.T(t, fixtures.Day3), Value: 10}, {Time: fixtures.T(t, fixtures.Day2), Value: 20}, {Time: fixtures.T(t, fixtures.Day1), Value: 10}, {Time: fixtures.T(t, fixtures.Day0), Value: 20}},
-			{{Time: fixtures.T(t, fixtures.Day3), Value: 20}, {Time: fixtures.T(t, fixtures.Day2), Value: 10}, {Time: fixtures.T(t, fixtures.Day1), Value: 20}, {Time: fixtures.T(t, fixtures.Day0), Value: 10}},
-		}).CorrelationMatrix())).To(Equal([][]float64{
-			{1, -1},
-			{-1, 1},
-		}))
+		assert.Equal(t,
+			toSlices(returns.NewTable([]returns.List{
+				{{Time: fixtures.T(t, fixtures.Day3), Value: 10}, {Time: fixtures.T(t, fixtures.Day2), Value: 20}, {Time: fixtures.T(t, fixtures.Day1), Value: 10}, {Time: fixtures.T(t, fixtures.Day0), Value: 20}},
+				{{Time: fixtures.T(t, fixtures.Day3), Value: 20}, {Time: fixtures.T(t, fixtures.Day2), Value: 10}, {Time: fixtures.T(t, fixtures.Day1), Value: 20}, {Time: fixtures.T(t, fixtures.Day0), Value: 10}},
+			}).CorrelationMatrix()),
+			[][]float64{
+				{1, -1},
+				{-1, 1},
+			},
+		)
 	})
 
 	t.Run("about halfish correlated", func(t *testing.T) {
@@ -104,7 +100,6 @@ func TestComposite_correlationMatrix(t *testing.T) {
 
 func TestDateAlignedReturnsList_ExpectedRisk(t *testing.T) {
 	t.Run("with one asset", func(t *testing.T) {
-		o := NewWithT(t)
 
 		list := returns.NewTable([]returns.List{{
 			{Time: fixtures.T(t, fixtures.Day2), Value: 1},
@@ -112,22 +107,20 @@ func TestDateAlignedReturnsList_ExpectedRisk(t *testing.T) {
 			{Time: fixtures.T(t, fixtures.Day0), Value: .5},
 		}})
 
-		o.Expect(list.ExpectedRisk([]float64{1})).To(Equal(list.List(0).Risk()))
+		assert.Equal(t, list.ExpectedRisk([]float64{1}), list.List(0).Risk())
 	})
 
 	t.Run("with two assets and one has no weight", func(t *testing.T) {
-		o := NewWithT(t)
 
 		list := returns.NewTable([]returns.List{
 			{{Value: 1}, {Value: -2 / 3}, {Value: .5}},
 			{{Value: .5}, {Value: .3}, {Value: .5}},
 		})
 
-		o.Expect(list.ExpectedRisk([]float64{1, 0})).To(Equal(list.List(0).Risk()))
+		assert.Equal(t, list.ExpectedRisk([]float64{1, 0}), list.List(0).Risk())
 	})
 
 	t.Run("with two completely correlated assets", func(t *testing.T) {
-		o := NewWithT(t)
 
 		list := returns.NewTable([]returns.List{
 			{{Value: 1}, {Value: -2 / 3}, {Value: .5}},
@@ -136,8 +129,8 @@ func TestDateAlignedReturnsList_ExpectedRisk(t *testing.T) {
 
 		compositeRisk := list.ExpectedRisk([]float64{0.2, 0.8})
 
-		o.Expect(compositeRisk).To(Equal(list.List(0).Risk()))
-		o.Expect(compositeRisk).To(Equal(list.List(1).Risk()))
+		assert.Equal(t, compositeRisk, list.List(0).Risk())
+		assert.Equal(t, compositeRisk, list.List(1).Risk())
 	})
 
 	t.Run("with equal risk contribution", func(t *testing.T) {
@@ -166,7 +159,6 @@ func TestDateAlignedReturnsList_ExpectedRisk(t *testing.T) {
 }
 
 func TestDateAlignedReturnsList_FirstAndLastSharedPeriod(t *testing.T) {
-	o := NewWithT(t)
 
 	list := returns.NewTable([]returns.List{
 		{
@@ -184,13 +176,12 @@ func TestDateAlignedReturnsList_FirstAndLastSharedPeriod(t *testing.T) {
 	})
 
 	end, start, err := list.EndAndStartDates()
-	o.Expect(err).NotTo(HaveOccurred())
-	o.Expect(start).To(Equal(date("2020-01-02")))
-	o.Expect(end).To(Equal(date("2020-01-04")))
+	assert.NoError(t, err)
+	assert.Equal(t, start, date("2020-01-02"))
+	assert.Equal(t, end, date("2020-01-04"))
 }
 
 func TestReturnsList_FirstAndLastSharedPeriod_no_overlap(t *testing.T) {
-	o := NewWithT(t)
 
 	list := returns.NewTable([]returns.List{
 		{
@@ -205,11 +196,10 @@ func TestReturnsList_FirstAndLastSharedPeriod_no_overlap(t *testing.T) {
 	})
 
 	_, _, err := list.EndAndStartDates()
-	o.Expect(err).NotTo(HaveOccurred())
+	assert.NoError(t, err)
 }
 
 func TestReturns_TruncateToDateRange(t *testing.T) {
-	o := NewWithT(t)
 
 	table := returns.List{
 		{Time: date("2021-06-25"), Value: 1.0},
@@ -223,15 +213,14 @@ func TestReturns_TruncateToDateRange(t *testing.T) {
 
 	rs := table.Between(date("2021-06-22"), date("2021-06-18"))
 
-	o.Expect(rs).To(Equal(returns.List{
+	assert.Equal(t, rs, returns.List{
 		{Time: date("2021-06-22"), Value: 1.0},
 		{Time: date("2021-06-21"), Value: 1.0},
 		{Time: date("2021-06-18"), Value: 1.0},
-	}))
+	})
 }
 
 func TestReturns_TruncateToDateRange_end_is_after_final_return(t *testing.T) {
-	o := NewWithT(t)
 
 	table := returns.List{
 		{Time: date("2021-06-25"), Value: 1.0},
@@ -245,14 +234,13 @@ func TestReturns_TruncateToDateRange_end_is_after_final_return(t *testing.T) {
 
 	rs := table.Between(date("2021-06-30"), date("2021-06-24"))
 
-	o.Expect(rs).To(Equal(returns.List{
+	assert.Equal(t, rs, returns.List{
 		{Time: date("2021-06-25"), Value: 1.0},
 		{Time: date("2021-06-24"), Value: 1.0},
-	}))
+	})
 }
 
 func TestReturns_TruncateToDateRange_start_is_before_initial_return(t *testing.T) {
-	o := NewWithT(t)
 
 	table := returns.List{
 		{Time: date("2021-06-25"), Value: 1.0},
@@ -266,15 +254,14 @@ func TestReturns_TruncateToDateRange_start_is_before_initial_return(t *testing.T
 
 	rs := table.Between(date("2021-06-21"), date("2021-06-01"))
 
-	o.Expect(rs).To(Equal(returns.List{
+	assert.Equal(t, rs, returns.List{
 		{Time: date("2021-06-21"), Value: 1.0},
 		{Time: date("2021-06-18"), Value: 1.0},
 		{Time: date("2021-06-17"), Value: 1.0},
-	}))
+	})
 }
 
 func TestReturns_TruncateToDateRange_start_and_end_are_beyond_return_range(t *testing.T) {
-	o := NewWithT(t)
 
 	table := returns.List{
 		{Time: date("2021-06-25"), Value: 1.0},
@@ -288,7 +275,7 @@ func TestReturns_TruncateToDateRange_start_and_end_are_beyond_return_range(t *te
 
 	rs := table.Between(date("2021-06-30"), date("2021-06-01"))
 
-	o.Expect(rs).To(Equal(returns.List{
+	assert.Equal(t, rs, returns.List{
 		{Time: date("2021-06-25"), Value: 1.0},
 		{Time: date("2021-06-24"), Value: 1.0},
 		{Time: date("2021-06-23"), Value: 1.0},
@@ -296,11 +283,10 @@ func TestReturns_TruncateToDateRange_start_and_end_are_beyond_return_range(t *te
 		{Time: date("2021-06-21"), Value: 1.0},
 		{Time: date("2021-06-18"), Value: 1.0},
 		{Time: date("2021-06-17"), Value: 1.0},
-	}))
+	})
 }
 
 func TestTruncateToOverlappingPeriods(t *testing.T) {
-	o := NewWithT(t)
 
 	lists := []returns.Table{
 		returns.NewTable([]returns.List{
@@ -344,16 +330,16 @@ func TestTruncateToOverlappingPeriods(t *testing.T) {
 	}
 
 	truncated, end, start, err := returns.AlignTables(lists...)
-	o.Expect(err).NotTo(HaveOccurred())
-	o.Expect(end).To(Equal(date("2020-01-08")))
-	o.Expect(start).To(Equal(date("2020-01-03")))
+	assert.NoError(t, err)
+	assert.Equal(t, end, date("2020-01-08"))
+	assert.Equal(t, start, date("2020-01-03"))
 
 	for _, list := range truncated {
 		for _, table := range list.Lists() {
 			e, s, err := table.EndAndStartDate()
-			o.Expect(err).NotTo(HaveOccurred())
-			o.Expect(e).To(Equal(date("2020-01-08")))
-			o.Expect(s).To(Equal(date("2020-01-03")))
+			assert.NoError(t, err)
+			assert.Equal(t, e, date("2020-01-08"))
+			assert.Equal(t, s, date("2020-01-03"))
 		}
 	}
 }
@@ -392,63 +378,31 @@ func roughlyEqual(t *testing.T, n1, n2 float64) {
 
 func TestReturns_Within(t *testing.T) {
 	t.Run("empty", func(t *testing.T) {
-		o := NewWithT(t)
 		var list returns.List
-		o.Expect(
-			list.Between(date("2050-05-07"), date("2000-05-07")),
-		).To(HaveLen(0))
+		assert.Len(t, list.Between(date("2050-05-07"), date("2000-05-07")), 0)
 	})
 
 	t.Run("out of order", func(t *testing.T) {
-		o := NewWithT(t)
-		list := returns.List{
-			{
-				Time: date("2020-02-01"),
-			},
-		}
-		o.Expect(
-			list.Between(date("2000-05-07"), date("2050-05-07")),
-		).To(HaveLen(0))
+		list := returns.List{{Time: date("2020-02-01")}}
+		assert.Len(t, list.Between(date("2000-05-07"), date("2050-05-07")), 0)
 	})
 
 	t.Run("one value in range", func(t *testing.T) {
-		o := NewWithT(t)
-		list := returns.List{
-			{
-				Time: date("2020-02-01"),
-			},
-		}
-		o.Expect(
-			list.Between(date("2050-05-07"), date("2000-05-07")),
-		).To(HaveLen(1))
+		list := returns.List{{Time: date("2020-02-01")}}
+		assert.Len(t, list.Between(date("2050-05-07"), date("2000-05-07")), 1)
 	})
 
 	t.Run("dates are before returns", func(t *testing.T) {
-		o := NewWithT(t)
-		list := returns.List{
-			{
-				Time: date("2020-02-01"),
-			},
-		}
-		o.Expect(
-			list.Between(date("2000-12-07"), date("2000-05-07")),
-		).To(HaveLen(0))
+		list := returns.List{{Time: date("2020-02-01")}}
+		assert.Len(t, list.Between(date("2000-12-07"), date("2000-05-07")), 0)
 	})
 
 	t.Run("dates are after returns", func(t *testing.T) {
-		o := NewWithT(t)
-		list := returns.List{
-			{
-				Time: date("2020-02-01"),
-			},
-		}
-		o.Expect(
-			list.Between(date("2050-12-07"), date("2050-05-07")),
-		).To(HaveLen(0))
+		list := returns.List{{Time: date("2020-02-01")}}
+		assert.Len(t, list.Between(date("2050-12-07"), date("2050-05-07")), 0)
 	})
 
 	t.Run("exactly one value for day", func(t *testing.T) {
-		o := NewWithT(t)
 		list := returns.List{
 			{
 				Time: date("2020-04-01"),
@@ -461,13 +415,10 @@ func TestReturns_Within(t *testing.T) {
 			},
 		}
 		sort.Sort(list)
-		o.Expect(
-			list.Between(date("2020-03-15"), date("2020-03-15")),
-		).To(HaveLen(1))
+		assert.Len(t, list.Between(date("2020-03-15"), date("2020-03-15")), 1)
 	})
 
 	t.Run("just the middle", func(t *testing.T) {
-		o := NewWithT(t)
 		list := returns.List{
 			{
 				Time: date("2020-04-01"),
@@ -480,13 +431,10 @@ func TestReturns_Within(t *testing.T) {
 			},
 		}
 		sort.Sort(list)
-		o.Expect(
-			list.Between(date("2020-03-20"), date("2020-03-10")),
-		).To(HaveLen(1))
+		assert.Len(t, list.Between(date("2020-03-20"), date("2020-03-10")), 1)
 	})
 
 	t.Run("times out of order", func(t *testing.T) {
-		o := NewWithT(t)
 		list := returns.List{
 			{
 				Time: date("2020-04-01"),
@@ -499,9 +447,7 @@ func TestReturns_Within(t *testing.T) {
 			},
 		}
 		sort.Sort(list)
-		o.Expect(
-			list.Between(date("1999-03-20"), date("2050-03-10")),
-		).To(HaveLen(0))
+		assert.Len(t, list.Between(date("1999-03-20"), date("2050-03-10")), 0)
 	})
 
 	t.Run("range around a single return", func(t *testing.T) {
@@ -525,19 +471,17 @@ func TestReturns_Within(t *testing.T) {
 
 		for index, ret := range list {
 			t.Run(strconv.Itoa(index), func(t *testing.T) {
-				o := NewWithT(t)
 				month := len(list) - index
 				t.Logf("month: %02d", month)
 				subsection := list.Between(datef("2020-%02d-20", month), datef("2020-%02d-01", month))
-				o.Expect(subsection).To(HaveLen(1))
-				o.Expect(subsection[0].Time).To(Equal(ret.Time))
+				assert.Len(t, subsection, 1)
+				assert.Equal(t, subsection[0].Time, ret.Time)
 			})
 		}
 	})
 }
 
 func TestReturns_ExcessReturns(t *testing.T) {
-	o := NewWithT(t)
 
 	list := returns.List{
 		{Value: 420, Time: date("2021-10-07")}, // out of time range of o
@@ -556,11 +500,11 @@ func TestReturns_ExcessReturns(t *testing.T) {
 
 	got := list.Excess(other)
 
-	o.Expect(got).To(Equal(returns.List{
+	assert.Equal(t, got, returns.List{
 		{Value: 0.02, Time: date("2021-10-06")},
 		{Value: 0.00, Time: date("2021-10-05")},
 		{Value: 0.02, Time: date("2021-10-04")},
-	}))
+	})
 }
 
 func FuzzReturnsAnnualizedRisk(f *testing.F) {

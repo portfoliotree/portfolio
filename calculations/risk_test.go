@@ -5,8 +5,8 @@ import (
 	"math"
 	"testing"
 
-	"github.com/crhntr/floattest"
-	. "github.com/onsi/gomega"
+	"github.com/portfoliotree/round"
+	"github.com/stretchr/testify/assert"
 
 	"gonum.org/v1/gonum/floats"
 	"gonum.org/v1/gonum/mat"
@@ -109,8 +109,6 @@ func TestNumberOfBets_Zero_Portfolio_Risk(t *testing.T) {
 }
 
 func TestRiskFromRiskContribution(t *testing.T) {
-	please := NewWithT(t)
-
 	ws := []float64{-.1, .8, .3}
 	rs := []float64{.2, .05, .25}
 	cs := mat.NewDense(3, 3, []float64{
@@ -119,12 +117,17 @@ func TestRiskFromRiskContribution(t *testing.T) {
 		0.60, 0.05, 1.00,
 	})
 
+	const precision = 4
 	tr, rcs, rw := RiskFromRiskContribution(rs, ws, cs)
+	tr = round.Decimal(tr, precision)
+	_ = round.Recursive(rcs, precision)
+	_ = round.Recursive(rw, precision)
+	sum := round.Decimal(floats.Sum(rw), precision)
 
-	please.Expect(rcs).To(floattest.EqualSlice(4, []float64{-0.0006, 0.0016, 0.0049}))
-	please.Expect(tr).To(floattest.Equal(4, .076714))
-	please.Expect(rw).To(floattest.EqualSlice(4, []float64{-0.10535, 0.27698, 0.82838}))
-	please.Expect(floats.Sum(rw)).To(floattest.Equal(4, 1))
+	assert.Equal(t, rcs, []float64{-0.0006, 0.0016, 0.0049})
+	assert.Equal(t, tr, .0767)
+	assert.Equal(t, rw, []float64{-0.1054, 0.2770, 0.8284})
+	assert.Equal(t, sum, 1.0)
 }
 
 // func TestLegacyRiskFromRiskContribution(t *testing.T) {

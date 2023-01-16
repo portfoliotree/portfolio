@@ -1,44 +1,41 @@
-package backtest
+package backtest_test
 
 import (
 	"context"
-	"fmt"
 	"math/rand"
 	"testing"
 	"time"
 
-	"github.com/crhntr/floattest"
-	. "github.com/onsi/gomega"
+	"github.com/portfoliotree/round"
+	"github.com/stretchr/testify/assert"
 
+	"github.com/portfoliotree/portfolio/backtest"
 	"github.com/portfoliotree/portfolio/backtest/backtestconfig"
 	"github.com/portfoliotree/portfolio/returns"
 )
 
 func TestSpec_Run(t *testing.T) {
 	t.Run("end date is before start date", func(t *testing.T) {
-		please := NewWithT(t)
 
 		assets := returns.NewTable([]returns.List{
 			{{Time: date("2020-01-03")}, {Time: date("2020-01-02")}, {Time: date("2020-01-01")}},
 			{{Time: date("2020-01-03")}, {Time: date("2020-01-02")} /*{Time: date("2020-01-01")}*/},
 		})
 
-		_, err := Run(context.Background(), date("2020-01-01"), date("2020-01-03"), assets, nil, nil, nil, nil)
-		please.Expect(err).To(HaveOccurred())
+		_, err := backtest.Run(context.Background(), date("2020-01-01"), date("2020-01-03"), assets, nil, nil, nil, nil)
+		assert.Error(t, err)
 	})
 	t.Run("start date does not have a return", func(t *testing.T) {
-		please := NewWithT(t)
 
 		rs := returns.NewTable([]returns.List{
 			{{Time: date("2020-01-03")}, {Time: date("2020-01-02")}, {Time: date("2020-01-01")}},
 			{{Time: date("2020-01-03")}, {Time: date("2020-01-02")} /*{Time: date("2020-01-01")}*/},
 		})
 
-		_, err := Run(context.Background(), date("2020-01-01"), date("2020-01-03"), rs, nil, nil, nil, nil)
-		please.Expect(err).To(HaveOccurred())
+		_, err := backtest.Run(context.Background(), date("2020-01-01"), date("2020-01-03"), rs, nil, nil, nil, nil)
+		assert.Error(t, err)
 	})
 	t.Run("end date does not have a return", func(t *testing.T) {
-		please := NewWithT(t)
 
 		policyWeightFunc := backtestconfig.EqualWeights{}.PolicyWeights
 		windowFunc := backtestconfig.WindowNotSet.Function
@@ -52,11 +49,10 @@ func TestSpec_Run(t *testing.T) {
 		start := assets.FirstTime()
 		end := date("2020-01-03")
 
-		_, err := Run(context.Background(), end, start, assets, policyWeightFunc, windowFunc, rebalanceIntervalFunc, policyUpdateIntervalFunc)
-		please.Expect(err).To(HaveOccurred())
+		_, err := backtest.Run(context.Background(), end, start, assets, policyWeightFunc, windowFunc, rebalanceIntervalFunc, policyUpdateIntervalFunc)
+		assert.Error(t, err)
 	})
 	t.Run("with no returns", func(t *testing.T) {
-		please := NewWithT(t)
 
 		assets := returns.Table{}
 
@@ -67,14 +63,13 @@ func TestSpec_Run(t *testing.T) {
 
 		end, start := time.Time{}, time.Time{}
 
-		result, err := Run(context.Background(), end, start, assets, policyWeightFunc, windowFunc, rebalanceIntervalFunc, policyUpdateIntervalFunc)
-		please.Expect(err).To(HaveOccurred())
+		result, err := backtest.Run(context.Background(), end, start, assets, policyWeightFunc, windowFunc, rebalanceIntervalFunc, policyUpdateIntervalFunc)
+		assert.Error(t, err)
 
-		please.Expect(result.ReturnsTable.NumberOfRows()).To(Equal(0))
+		assert.Equal(t, result.ReturnsTable.NumberOfRows(), 0)
 	})
 
 	t.Run("when there is one asset", func(t *testing.T) {
-		please := NewWithT(t)
 
 		policyWeightFunc := backtestconfig.EqualWeights{}.PolicyWeights
 		windowFunc := backtestconfig.OneDayWindow.Function
@@ -90,15 +85,14 @@ func TestSpec_Run(t *testing.T) {
 		assets := returns.NewTable([]returns.List{asset})
 		end, start, _ := assets.EndAndStartDates()
 
-		result, err := Run(context.Background(), end, start, assets, policyWeightFunc, windowFunc, rebalanceIntervalFunc, policyUpdateIntervalFunc)
+		result, err := backtest.Run(context.Background(), end, start, assets, policyWeightFunc, windowFunc, rebalanceIntervalFunc, policyUpdateIntervalFunc)
 
-		please.Expect(err).NotTo(HaveOccurred())
+		assert.NoError(t, err)
 
-		please.Expect(result.ReturnsTable.NumberOfRows()).To(Equal(asset.Returns().Len()))
+		assert.Equal(t, result.ReturnsTable.NumberOfRows(), asset.Returns().Len())
 	})
 
 	t.Run("it responds to context cancellation", func(t *testing.T) {
-		please := NewWithT(t)
 
 		asset := returns.List{
 			{Time: date("2021-01-04"), Value: 0.8},
@@ -125,13 +119,12 @@ func TestSpec_Run(t *testing.T) {
 		rebalanceIntervalFunc := backtestconfig.IntervalDaily.CheckFunction()
 		policyUpdateIntervalFunc := backtestconfig.IntervalDaily.CheckFunction()
 
-		_, err = Run(ctx, end, start, assets, policyWeightFunc, windowFunc, rebalanceIntervalFunc, policyUpdateIntervalFunc)
+		_, err = backtest.Run(ctx, end, start, assets, policyWeightFunc, windowFunc, rebalanceIntervalFunc, policyUpdateIntervalFunc)
 
-		please.Expect(err).To(MatchError(context.Canceled))
+		assert.Equal(t, err, context.Canceled)
 	})
 
 	t.Run("daily rebalancing", func(t *testing.T) {
-		please := NewWithT(t)
 
 		asset1 := returns.List{
 			{Time: date("2021-01-07"), Value: -0.1},
@@ -159,15 +152,15 @@ func TestSpec_Run(t *testing.T) {
 		policyUpdateIntervalFunc := backtestconfig.IntervalDaily.CheckFunction()
 
 		end, start, _ := assets.EndAndStartDates()
-		result, err := Run(context.Background(), end, start, assets, policyWeightFunc, windowFunc, rebalanceIntervalFunc, policyUpdateIntervalFunc)
+		result, err := backtest.Run(context.Background(), end, start, assets, policyWeightFunc, windowFunc, rebalanceIntervalFunc, policyUpdateIntervalFunc)
 
-		please.Expect(err).NotTo(HaveOccurred())
-
-		please.Expect(result.Returns().Values()).To(floattest.EqualSlice(2, []float64{0.1, 0.225, -0.3, 0.1, 0.125, 0.3, -0.25}))
+		assert.NoError(t, err)
+		values := result.Returns().Values()
+		_ = round.Recursive(values, 3)
+		assert.Equal(t, values, []float64{0.1, 0.225, -0.3, 0.1, 0.125, 0.3, -0.25})
 	})
 
 	t.Run("when the policy is not implementable at first data", func(t *testing.T) {
-		please := NewWithT(t)
 
 		asset1 := returns.List{
 			{Time: date("2021-04-23"), Value: -0.1},
@@ -191,7 +184,7 @@ func TestSpec_Run(t *testing.T) {
 
 		policyWeightFunc := func(ctx context.Context, t time.Time, assetReturns returns.Table, currentWeights []float64) ([]float64, error) {
 			if t.Before(date("2021-04-20")) {
-				return nil, ErrorNotEnoughData{}
+				return nil, backtest.ErrorNotEnoughData{}
 			}
 			return backtestconfig.EqualWeights{}.PolicyWeights(ctx, t, assetReturns, currentWeights)
 		}
@@ -200,9 +193,9 @@ func TestSpec_Run(t *testing.T) {
 		policyUpdateIntervalFunc := backtestconfig.IntervalDaily.CheckFunction()
 
 		end, start, _ := assets.EndAndStartDates()
-		result, err := Run(context.Background(), end, start, assets, policyWeightFunc, windowFunc, rebalanceIntervalFunc, policyUpdateIntervalFunc)
+		result, err := backtest.Run(context.Background(), end, start, assets, policyWeightFunc, windowFunc, rebalanceIntervalFunc, policyUpdateIntervalFunc)
 
-		please.Expect(err).NotTo(HaveOccurred())
+		assert.NoError(t, err)
 
 		expected := returns.List{
 			{Time: date("2021-04-23"), Value: -0.10},
@@ -211,11 +204,12 @@ func TestSpec_Run(t *testing.T) {
 			{Time: date("2021-04-20"), Value: 0.30},
 		}
 
-		please.Expect(result.Returns().Values()).To(floattest.EqualSlice(2, expected.Values()))
+		rs := result.Returns()
+		_ = round.Recursive(rs, 2)
+		assert.Equal(t, rs, expected)
 	})
 
 	t.Run("composite returns are calculated correctly", func(t *testing.T) {
-		please := NewWithT(t)
 
 		asset1 := returns.List{
 			{Time: date("2021-04-04"), Value: 0.20},
@@ -237,9 +231,9 @@ func TestSpec_Run(t *testing.T) {
 		policyUpdateIntervalFunc := backtestconfig.IntervalDaily.CheckFunction()
 
 		end, start, _ := assets.EndAndStartDates()
-		result, err := Run(context.Background(), end, start, assets, policyWeightFunc, windowFunc, rebalanceIntervalFunc, policyUpdateIntervalFunc)
+		result, err := backtest.Run(context.Background(), end, start, assets, policyWeightFunc, windowFunc, rebalanceIntervalFunc, policyUpdateIntervalFunc)
 
-		please.Expect(err).NotTo(HaveOccurred())
+		assert.NoError(t, err)
 
 		expected := returns.List{
 			{Time: date("2021-04-04"), Value: 0.10},
@@ -248,11 +242,12 @@ func TestSpec_Run(t *testing.T) {
 			{Time: date("2021-04-01"), Value: 0.10},
 		}
 
-		please.Expect(result.Returns().Values()).To(floattest.EqualSlice(2, expected.Values()))
+		rs := result.Returns()
+		_ = round.Recursive(rs, 2)
+		assert.Equal(t, rs, expected)
 	})
 
 	t.Run("when a look back is set", func(t *testing.T) {
-		please := NewWithT(t)
 
 		asset1 := returns.List{
 			{Time: date("2021-04-23"), Value: -0.1},
@@ -268,40 +263,40 @@ func TestSpec_Run(t *testing.T) {
 		}
 
 		callCount := 0
-		policyWeightFunc := func(_ context.Context, t time.Time, assetReturns returns.Table, currentWeights []float64) ([]float64, error) {
+		policyWeightFunc := func(_ context.Context, tm time.Time, assetReturns returns.Table, currentWeights []float64) ([]float64, error) {
 			callCount++
-			please.Expect(assetReturns.NumberOfColumns()).To(Equal(1), fmt.Sprintf("call count %d", callCount))
+			assert.Equalf(t, assetReturns.NumberOfColumns(), 1, "call count %d", callCount)
 			for c := 0; c < assetReturns.NumberOfColumns(); c++ {
 				rs := assetReturns.List(c)
 				switch callCount {
 				case 1:
-					please.Expect(rs.Times()).To(Equal([]time.Time{
+					assert.Equalf(t, rs.Times(), []time.Time{
 						date("2021-04-19"),
 						date("2021-04-16"),
 						date("2021-04-15"),
 						date("2021-04-14"),
 						date("2021-04-13"),
-					}), fmt.Sprintf("call count %d", callCount))
+					}, "call count %d", callCount)
 				case 2:
-					please.Expect(rs.Times()).To(Equal([]time.Time{
+					assert.Equalf(t, rs.Times(), []time.Time{
 						date("2021-04-20"),
 						date("2021-04-19"),
 						date("2021-04-16"),
 						date("2021-04-15"),
 						date("2021-04-14"),
-					}), fmt.Sprintf("call count %d", callCount))
+					}, "call count %d", callCount)
 				case 7:
-					please.Expect(rs.Times()).To(Equal([]time.Time{
+					assert.Equalf(t, rs.Times(), []time.Time{
 						date("2021-04-23"),
 						date("2021-04-22"),
 						date("2021-04-21"),
 						date("2021-04-20"),
 						date("2021-04-19"),
-					}), fmt.Sprintf("call count %d", callCount))
+					}, "call count %d", callCount)
 				}
-				please.Expect(rs).To(HaveLen(5), fmt.Sprintf("call count %d", callCount))
+				assert.Lenf(t, rs, 5, "call count %d", callCount)
 			}
-			return backtestconfig.EqualWeights{}.PolicyWeights(context.Background(), t, assetReturns, currentWeights)
+			return backtestconfig.EqualWeights{}.PolicyWeights(context.Background(), tm, assetReturns, currentWeights)
 		}
 
 		windowFunc := backtestconfig.OneWeekWindow.Function
@@ -311,21 +306,20 @@ func TestSpec_Run(t *testing.T) {
 		assets := returns.NewTable([]returns.List{asset1})
 		end, start, _ := assets.EndAndStartDates()
 		start = backtestconfig.OneWeekWindow.Add(start)
-		result, err := Run(context.Background(), end, start, assets,
+		result, err := backtest.Run(context.Background(), end, start, assets,
 			policyWeightFunc,
 			windowFunc,
 			rebalanceIntervalFunc,
 			policyUpdateIntervalFunc,
 		)
-		please.Expect(callCount).To(Equal(5))
-		please.Expect(err).NotTo(HaveOccurred())
-		please.Expect(result.ReturnsTable.NumberOfRows()).To(Equal(5))
+		assert.Equal(t, callCount, 5)
+		assert.NoError(t, err)
+		assert.Equal(t, result.ReturnsTable.NumberOfRows(), 5)
 	})
 }
 
 func TestSpec_Run_weightHistory(t *testing.T) {
 	t.Run("single asset", func(t *testing.T) {
-		please := NewWithT(t)
 
 		asset := returns.List{
 			{Time: date("2021-01-22")},
@@ -353,11 +347,11 @@ func TestSpec_Run_weightHistory(t *testing.T) {
 
 		end, start, _ := assets.EndAndStartDates()
 
-		result, err := Run(context.Background(), end, start, assets, policyWeightFunc, windowFunc, policyUpdateIntervalFunc, rebalanceIntervalFunc)
+		result, err := backtest.Run(context.Background(), end, start, assets, policyWeightFunc, windowFunc, policyUpdateIntervalFunc, rebalanceIntervalFunc)
 
-		please.Expect(err).NotTo(HaveOccurred())
+		assert.NoError(t, err)
 
-		please.Expect(result.Weights).To(Equal([][]float64{
+		assert.Equal(t, result.Weights, [][]float64{
 			{1},
 			{1},
 			{1},
@@ -369,8 +363,8 @@ func TestSpec_Run_weightHistory(t *testing.T) {
 			{1},
 			{1},
 			{1},
-		}))
-		please.Expect(result.PolicyUpdateTimes).To(Equal([]time.Time{
+		})
+		assert.Equal(t, result.PolicyUpdateTimes, []time.Time{
 			date("2021-01-22"),
 			date("2021-01-21"),
 			date("2021-01-20"),
@@ -381,9 +375,9 @@ func TestSpec_Run_weightHistory(t *testing.T) {
 			date("2021-01-12"),
 			date("2021-01-11"),
 			date("2021-01-08"),
-		}))
+		})
 
-		please.Expect(result.RebalanceTimes).To(Equal([]time.Time{
+		assert.Equal(t, result.RebalanceTimes, []time.Time{
 			date("2021-01-22"),
 			date("2021-01-21"),
 			date("2021-01-20"),
@@ -395,11 +389,10 @@ func TestSpec_Run_weightHistory(t *testing.T) {
 			date("2021-01-11"),
 			date("2021-01-08"),
 			date("2021-01-07"),
-		}))
+		})
 	})
 
 	t.Run("two assets with weekly rebalancing", func(t *testing.T) {
-		please := NewWithT(t)
 
 		asset1 := returns.List{
 			{Time: date("2021-01-22"), Value: 0.0},
@@ -444,18 +437,16 @@ func TestSpec_Run_weightHistory(t *testing.T) {
 		policyUpdateIntervalFunc := backtestconfig.IntervalMonthly.CheckFunction()
 
 		end, start, _ := assets.EndAndStartDates()
-		result, err := Run(context.Background(), end, start, assets, policyWeightFunc, windowFunc, policyUpdateIntervalFunc, rebalanceIntervalFunc)
+		result, err := backtest.Run(context.Background(), end, start, assets, policyWeightFunc, windowFunc, policyUpdateIntervalFunc, rebalanceIntervalFunc)
 
-		please.Expect(err).NotTo(HaveOccurred())
+		assert.NoError(t, err)
 
-		please.Expect(result.Weights).To(HaveLen(len(asset1)))
-		please.Expect(result.RebalanceTimes).To(HaveLen(3))
-		please.Expect(result.PolicyUpdateTimes).To(HaveLen(0), "calculating the initial policy weights is not an update")
+		assert.Len(t, result.Weights, len(asset1))
+		assert.Len(t, result.RebalanceTimes, 3)
+		assert.Len(t, result.PolicyUpdateTimes, 0, "calculating the initial policy weights is not an update")
 	})
 
 	t.Run("daily rebalanced returns is the same when daily rebalancing", func(t *testing.T) {
-		please := NewWithT(t)
-
 		asset1 := returns.List{
 			{Time: date("2021-01-22"), Value: 0.1},
 			{Time: date("2021-01-21"), Value: 0.1},
@@ -502,11 +493,11 @@ func TestSpec_Run_weightHistory(t *testing.T) {
 		policyUpdateIntervalFunc := backtestconfig.IntervalWeekly.CheckFunction()
 
 		end, start, _ := assets.EndAndStartDates()
-		result, err := Run(context.Background(), end, start, assets, policyWeightFunc, windowFunc, policyUpdateIntervalFunc, rebalanceIntervalFunc)
+		result, err := backtest.Run(context.Background(), end, start, assets, policyWeightFunc, windowFunc, policyUpdateIntervalFunc, rebalanceIntervalFunc)
 
-		please.Expect(err).NotTo(HaveOccurred())
+		assert.NoError(t, err)
 
-		please.Expect(result.Returns()).To(Equal(result.DailyRebalancedReturns()))
+		assert.Equal(t, result.Returns(), result.DailyRebalancedReturns())
 	})
 }
 

@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	. "github.com/onsi/gomega"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/portfoliotree/portfolio/internal/fixtures"
 )
@@ -44,8 +44,6 @@ func Test_betweenIndexes(t *testing.T) {
 
 			t.Run(strconv.Itoa(index), func(i int, r Return) func(t *testing.T) {
 				return func(t *testing.T) {
-					o := NewWithT(t)
-
 					month := len(list) - index
 					t1 := fixtures.T(t, fmt.Sprintf("2020-%02d-20", month+1))
 					t0 := fixtures.T(t, fmt.Sprintf("2020-%02d-20", month))
@@ -56,9 +54,9 @@ func Test_betweenIndexes(t *testing.T) {
 					})
 
 					t.Logf("t1: %d, t0: %d", i1, i0)
-					o.Expect(i0 - i1).To(Equal(1))
-					o.Expect(i0).To(Equal(index))
-					o.Expect(i1).To(Equal(index - 1))
+					assert.Equal(t, i0-i1, 1)
+					assert.Equal(t, i0, index)
+					assert.Equal(t, i1, index-1)
 				}
 			}(index, ret))
 		}

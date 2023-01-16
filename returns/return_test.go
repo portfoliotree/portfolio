@@ -4,7 +4,7 @@ import (
 	"math"
 	"testing"
 
-	. "github.com/onsi/gomega"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/portfoliotree/portfolio/internal/fixtures"
 	"github.com/portfoliotree/portfolio/returns"
@@ -14,14 +14,12 @@ func TestNewReturn(t *testing.T) {
 	d := fixtures.T(t, "2022-01-01")
 	t.Run("okay", func(t *testing.T) {
 		r := returns.New(d, 0.4)
-		o := NewWithT(t)
-		o.Expect(r.Time).To(Equal(d))
-		o.Expect(r.Value).To(Equal(0.4))
+		assert.Equal(t, r.Time, d)
+		assert.Equal(t, r.Value, 0.4)
 	})
 	t.Run("nan", func(t *testing.T) {
-		o := NewWithT(t)
-		o.Expect(func() {
+		assert.Panics(t, func() {
 			returns.New(d, math.NaN())
-		}).To(Panic())
+		})
 	})
 }

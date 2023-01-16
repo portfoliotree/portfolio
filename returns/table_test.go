@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
-	. "github.com/onsi/gomega"
 	"github.com/portfoliotree/round"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/portfoliotree/portfolio/internal/fixtures"
 	"github.com/portfoliotree/portfolio/returns"
@@ -20,9 +20,8 @@ func TestNewTable(t *testing.T) {
 		tab := returns.NewTable(lists)
 
 		// then
-		o := NewWithT(t)
-		o.Expect(tab.Times()).To(HaveLen(0))
-		o.Expect(tab.NumberOfColumns()).To(Equal(0))
+		assert.Len(t, tab.Times(), 0)
+		assert.Equal(t, tab.NumberOfColumns(), 0)
 	})
 	t.Run("empty lists", func(t *testing.T) {
 		// given
@@ -35,9 +34,8 @@ func TestNewTable(t *testing.T) {
 		tab := returns.NewTable(lists)
 
 		// then
-		o := NewWithT(t)
-		o.Expect(tab.Times()).To(HaveLen(0))
-		o.Expect(tab.NumberOfColumns()).To(Equal(2))
+		assert.Len(t, tab.Times(), 0)
+		assert.Equal(t, tab.NumberOfColumns(), 2)
 	})
 
 	t.Run("a single return per list", func(t *testing.T) {
@@ -48,8 +46,7 @@ func TestNewTable(t *testing.T) {
 				{rtn(t, fixtures.Day0, 0.2)},
 				{rtn(t, fixtures.Day0, 0.3)},
 			})
-			o := NewWithT(t)
-			o.Expect(lists.Times()).To(HaveLen(1), "it returns one row")
+			assert.Len(t, lists.Times(), 1, "it returns one row")
 		})
 
 		t.Run("when the number of columns is fetched", func(t *testing.T) {
@@ -58,8 +55,7 @@ func TestNewTable(t *testing.T) {
 				{rtn(t, fixtures.Day0, 0.2)},
 				{rtn(t, fixtures.Day0, 0.3)},
 			})
-			o := NewWithT(t)
-			o.Expect(lists.NumberOfColumns()).To(Equal(3), "it gives the correct number")
+			assert.Equal(t, lists.NumberOfColumns(), 3, "it gives the correct column count")
 		})
 
 		t.Run("when the number of rows is fetched", func(t *testing.T) {
@@ -68,8 +64,7 @@ func TestNewTable(t *testing.T) {
 				{rtn(t, fixtures.Day0, 0.2)},
 				{rtn(t, fixtures.Day0, 0.3)},
 			})
-			o := NewWithT(t)
-			o.Expect(lists.NumberOfRows()).To(Equal(1), "it gives the correct number")
+			assert.Equal(t, lists.NumberOfRows(), 1, "it gives the correct row count")
 		})
 
 		// then
@@ -79,10 +74,9 @@ func TestNewTable(t *testing.T) {
 				{rtn(t, fixtures.Day0, 0.2)},
 				{rtn(t, fixtures.Day0, 0.3)},
 			})
-			o := NewWithT(t)
 			row, found := lists.Row(fixtures.T(t, fixtures.Day0))
-			o.Expect(found).To(BeTrue(), "it finds the row")
-			o.Expect(row).To(Equal([]float64{0.1, 0.2, 0.3}), "it returns the correct values")
+			assert.True(t, found)
+			assert.Equal(t, row, []float64{0.1, 0.2, 0.3})
 		})
 	})
 
@@ -98,13 +92,11 @@ func TestNewTable(t *testing.T) {
 
 		// then
 		t.Run("when times are fetched", func(t *testing.T) {
-			o := NewWithT(t)
-			o.Expect(tab.Times()).To(Equal([]time.Time{fixtures.T(t, fixtures.Day2), fixtures.T(t, fixtures.Day1), fixtures.T(t, fixtures.Day0)}), "it has the right dates")
+			assert.Equal(t, tab.Times(), []time.Time{fixtures.T(t, fixtures.Day2), fixtures.T(t, fixtures.Day1), fixtures.T(t, fixtures.Day0)}, "it has the right dates")
 		})
 
 		t.Run("when the number of columns is fetched", func(t *testing.T) {
-			o := NewWithT(t)
-			o.Expect(tab.NumberOfColumns()).To(Equal(3), "it gives the correct number")
+			assert.Equal(t, tab.NumberOfColumns(), 3, "it gives the correct number")
 		})
 
 		// then
@@ -159,9 +151,8 @@ func TestNewTable(t *testing.T) {
 					row, found := tab.Row(tt.date)
 
 					// then
-					o := NewWithT(t)
-					o.Expect(found).To(Equal(tt.expFound), "it finds the row")
-					o.Expect(row).To(Equal(tt.expVal), "it returns the correct values")
+					assert.Equal(t, found, tt.expFound, "it finds the row")
+					assert.Equal(t, row, tt.expVal, "it returns the correct values")
 				})
 			}
 		})
@@ -175,9 +166,8 @@ func TestNewTable(t *testing.T) {
 				{rtn(t, fixtures.Day0, 0.1)},
 				{rtn(t, fixtures.Day2, 0.3)},
 			})
-			o := NewWithT(t)
-			o.Expect(lists.NumberOfRows()).To(Equal(0))
-			o.Expect(lists.Times()).To(HaveLen(0))
+			assert.Equal(t, lists.NumberOfRows(), 0)
+			assert.Len(t, lists.Times(), 0)
 		})
 
 		t.Run("the second asset has more history", func(t *testing.T) {
@@ -186,11 +176,10 @@ func TestNewTable(t *testing.T) {
 				{rtn(t, fixtures.Day1, 0.3)},
 				{rtn(t, fixtures.Day1, 0.2), rtn(t, fixtures.Day0, 0.1)},
 			})
-			o := NewWithT(t)
-			o.Expect(lists.NumberOfRows()).To(Equal(1))
+			assert.Equal(t, lists.NumberOfRows(), 1)
 			values, found := lists.Row(fixtures.T(t, fixtures.Day1))
-			o.Expect(found).To(BeTrue())
-			o.Expect(values).To(Equal([]float64{0.3, 0.2}))
+			assert.True(t, found)
+			assert.Equal(t, values, []float64{0.3, 0.2})
 		})
 
 		t.Run("the first asset has more history", func(t *testing.T) {
@@ -199,11 +188,10 @@ func TestNewTable(t *testing.T) {
 				{rtn(t, fixtures.Day1, 0.2), rtn(t, fixtures.Day0, 0.1)},
 				{rtn(t, fixtures.Day1, 0.3)},
 			})
-			o := NewWithT(t)
-			o.Expect(lists.NumberOfRows()).To(Equal(1))
+			assert.Equal(t, lists.NumberOfRows(), 1)
 			values, found := lists.Row(fixtures.T(t, fixtures.Day1))
-			o.Expect(found).To(BeTrue())
-			o.Expect(values).To(Equal([]float64{0.2, 0.3}))
+			assert.True(t, found)
+			assert.Equal(t, values, []float64{0.2, 0.3})
 		})
 
 		t.Run("the first asset has more recent returns", func(t *testing.T) {
@@ -212,12 +200,11 @@ func TestNewTable(t *testing.T) {
 				{rtn(t, fixtures.Day1, 0.2), rtn(t, fixtures.Day0, 0.1)},
 				{ /*                       ,*/ rtn(t, fixtures.Day0, 0.3)},
 			})
-			o := NewWithT(t)
-			o.Expect(lists.NumberOfRows()).To(Equal(1))
+			assert.Equal(t, lists.NumberOfRows(), 1)
 
 			values, found := lists.Row(fixtures.T(t, fixtures.Day0))
-			o.Expect(found).To(BeTrue())
-			o.Expect(values).To(Equal([]float64{0.1, 0.3}))
+			assert.True(t, found)
+			assert.Equal(t, values, []float64{0.1, 0.3})
 		})
 
 		t.Run("the second asset has more recent returns", func(t *testing.T) {
@@ -226,11 +213,10 @@ func TestNewTable(t *testing.T) {
 				{ /*                       ,*/ rtn(t, fixtures.Day0, 0.3)},
 				{rtn(t, fixtures.Day1, 0.2), rtn(t, fixtures.Day0, 0.1)},
 			})
-			o := NewWithT(t)
-			o.Expect(lists.NumberOfRows()).To(Equal(1))
+			assert.Equal(t, lists.NumberOfRows(), 1)
 			values, found := lists.Row(fixtures.T(t, fixtures.Day0))
-			o.Expect(found).To(BeTrue())
-			o.Expect(values).To(Equal([]float64{0.3, 0.1}))
+			assert.True(t, found)
+			assert.Equal(t, values, []float64{0.3, 0.1})
 		})
 	})
 }
@@ -242,10 +228,9 @@ func TestTable_Between(t *testing.T) {
 
 		// when
 
-		o := NewWithT(t)
-		o.Expect(func() {
+		assert.NotPanics(t, func() {
 			_ = tab.Between(fixtures.T(t, fixtures.Day0), fixtures.T(t, fixtures.Day1))
-		}).NotTo(Panic())
+		})
 	})
 
 	t.Run("times are outside of table", func(t *testing.T) {
@@ -264,9 +249,8 @@ func TestTable_Between(t *testing.T) {
 
 		// then
 
-		o := NewWithT(t)
-		o.Expect(slice.ColumnValues()).To(Equal(table.ColumnValues()))
-		o.Expect(slice.Times()).To(Equal([]time.Time{fixtures.T(t, fixtures.Day2), fixtures.T(t, fixtures.Day1), fixtures.T(t, fixtures.Day0)}))
+		assert.Equal(t, slice.ColumnValues(), table.ColumnValues())
+		assert.Equal(t, slice.Times(), []time.Time{fixtures.T(t, fixtures.Day2), fixtures.T(t, fixtures.Day1), fixtures.T(t, fixtures.Day0)})
 	})
 
 	t.Run("times are inside the table", func(t *testing.T) {
@@ -284,12 +268,11 @@ func TestTable_Between(t *testing.T) {
 
 		// then
 
-		o := NewWithT(t)
-		o.Expect(slice.ColumnValues()).To(Equal([][]float64{
+		assert.Equal(t, slice.ColumnValues(), [][]float64{
 			{0.10, 0.20},
 			{0.01, 0.02},
-		}))
-		o.Expect(slice.Times()).To(Equal([]time.Time{fixtures.T(t, fixtures.Day2), fixtures.T(t, fixtures.Day1)}))
+		})
+		assert.Equal(t, slice.Times(), []time.Time{fixtures.T(t, fixtures.Day2), fixtures.T(t, fixtures.Day1)})
 	})
 }
 
@@ -301,11 +284,10 @@ func TestTable_AddColumn(t *testing.T) {
 		table = table.AddColumn(returns.List{
 			rtn(t, fixtures.Day3, .1), rtn(t, fixtures.Day2, .1), rtn(t, fixtures.Day1, .1), rtn(t, fixtures.Day0, .1),
 		})
-		o := NewWithT(t)
-		o.Expect(table.Lists()).To(Equal([]returns.List{
+		assert.Equal(t, table.Lists(), []returns.List{
 			{rtn(t, fixtures.Day3, .1), rtn(t, fixtures.Day2, 0), rtn(t, fixtures.Day1, .1), rtn(t, fixtures.Day0, .1)},
 			{rtn(t, fixtures.Day3, .1), rtn(t, fixtures.Day2, .1), rtn(t, fixtures.Day1, .1), rtn(t, fixtures.Day0, .1)},
-		}))
+		})
 	})
 
 	t.Run("when adding list with no overlap", func(t *testing.T) {
@@ -315,18 +297,16 @@ func TestTable_AddColumn(t *testing.T) {
 		table = table.AddColumn(returns.List{
 			rtn(t, fixtures.Day0, .1),
 		})
-		o := NewWithT(t)
-		o.Expect(table.Lists()).To(Equal([]returns.List{
+		assert.Equal(t, table.Lists(), []returns.List{
 			{},
 			{},
-		}))
+		})
 	})
 
 	//t.Run("when adding to a sliced column", func(t *testing.T) {
 	//	t.SkipNow()
 	//	table := returns.NewTable([]returns.List{{}})
 	//	slice := table.Between(fixtures.T(t, fixtures.Day1), fixtures.T(t, fixtures.Day0))
-	//	o := NewWithT(t)
 	//	o.Expect(func() {
 	//		slice.AddColumn(returns.List{})
 	//	}).To(Panic())
@@ -336,8 +316,7 @@ func TestTable_AddColumn(t *testing.T) {
 func TestTable_CorrelationMatrix(t *testing.T) {
 	t.Run("empty", func(t *testing.T) {
 		tab := returns.NewTable(nil)
-		o := NewWithT(t)
-		o.Expect(tab.CorrelationMatrixValues()).To(HaveLen(0))
+		assert.Len(t, tab.CorrelationMatrixValues(), 0)
 	})
 	returnsFromQuotes := func(quotes ...float64) []float64 {
 		if len(quotes) < 2 {
@@ -356,11 +335,10 @@ func TestTable_CorrelationMatrix(t *testing.T) {
 			{rtn(t, fixtures.Day2, rs1[2]), rtn(t, fixtures.Day1, rs1[1]), rtn(t, fixtures.Day0, rs1[0])},
 			{rtn(t, fixtures.Day2, rs2[2]), rtn(t, fixtures.Day1, rs2[1]), rtn(t, fixtures.Day0, rs2[0])},
 		})
-		o := NewWithT(t)
-		o.Expect(table.CorrelationMatrixValues()).To(Equal([][]float64{
+		assert.Equal(t, table.CorrelationMatrixValues(), [][]float64{
 			{1, 1},
 			{1, 1},
-		}))
+		})
 	})
 	t.Run("perfectly negatively correlated", func(t *testing.T) {
 		rs1 := returnsFromQuotes(10.00, 20.00, 10.00, 20.00)
@@ -369,11 +347,10 @@ func TestTable_CorrelationMatrix(t *testing.T) {
 			{rtn(t, fixtures.Day2, rs1[2]), rtn(t, fixtures.Day1, rs1[1]), rtn(t, fixtures.Day0, rs1[0])},
 			{rtn(t, fixtures.Day2, rs2[2]), rtn(t, fixtures.Day1, rs2[1]), rtn(t, fixtures.Day0, rs2[0])},
 		})
-		o := NewWithT(t)
-		o.Expect(table.CorrelationMatrixValues()).To(Equal([][]float64{
+		assert.Equal(t, table.CorrelationMatrixValues(), [][]float64{
 			{1, -1},
 			{-1, 1},
-		}))
+		})
 	})
 }
 
@@ -382,10 +359,9 @@ func TestTable_Risks(t *testing.T) {
 		{rtn(t, fixtures.Day2, -0.02), rtn(t, fixtures.Day1, 0.03), rtn(t, fixtures.Day0, -0.01)},
 		{rtn(t, fixtures.Day2, +0.03), rtn(t, fixtures.Day1, 0.01), rtn(t, fixtures.Day0, +0.01)},
 	})
-	o := NewWithT(t)
 	result := table.Risks()
 	_ = round.Recursive(result, 4)
-	o.Expect(result).To(Equal([]float64{0.0265, 0.0115}))
+	assert.Equal(t, result, []float64{0.0265, 0.0115})
 }
 
 func TestTable_TimeWeightedReturns(t *testing.T) {
@@ -393,10 +369,9 @@ func TestTable_TimeWeightedReturns(t *testing.T) {
 		{rtn(t, fixtures.Day2, -0.01), rtn(t, fixtures.Day1, 0.03), rtn(t, fixtures.Day0, -0.02)},
 		{rtn(t, fixtures.Day2, +0.00), rtn(t, fixtures.Day1, 0.00), rtn(t, fixtures.Day0, +0.01)},
 	})
-	o := NewWithT(t)
 	result := table.TimeWeightedReturns()
 	_ = round.Recursive(result, 4)
-	o.Expect(result).To(Equal([]float64{-0.0566, 1.3067}))
+	assert.Equal(t, result, []float64{-0.0566, 1.3067})
 }
 
 func TestTable_AnnualizedArithmeticReturns(t *testing.T) {
@@ -404,10 +379,9 @@ func TestTable_AnnualizedArithmeticReturns(t *testing.T) {
 		{rtn(t, fixtures.Day2, -0.01), rtn(t, fixtures.Day1, 0.03), rtn(t, fixtures.Day0, -0.02)},
 		{rtn(t, fixtures.Day2, +0.00), rtn(t, fixtures.Day1, 0.00), rtn(t, fixtures.Day0, +0.01)},
 	})
-	o := NewWithT(t)
 	result := table.AnnualizedArithmeticReturns()
 	_ = round.Recursive(result, 4)
-	o.Expect(result).To(Equal([]float64{0, 0.84}))
+	assert.Equal(t, result, []float64{0, 0.84})
 }
 
 func TestTable_ExpectedRisk(t *testing.T) {
@@ -415,13 +389,12 @@ func TestTable_ExpectedRisk(t *testing.T) {
 		{rtn(t, fixtures.Day2, -0.01), rtn(t, fixtures.Day1, 0.03), rtn(t, fixtures.Day0, -0.02)},
 		{rtn(t, fixtures.Day2, +0.00), rtn(t, fixtures.Day1, -0.01), rtn(t, fixtures.Day0, +0.01)},
 	})
-	o := NewWithT(t)
 	result := table.ExpectedRisk([]float64{0.5, 0.5})
 	result = round.Decimal(result, 4)
-	o.Expect(result).To(Equal(0.0087))
+	assert.Equal(t, result, 0.0087)
 	risks := table.Risks()
-	o.Expect(result).To(BeNumerically("<", risks[0]))
-	o.Expect(result).To(BeNumerically("<", risks[1]))
+	assert.Less(t, result, risks[0])
+	assert.Less(t, result, risks[1])
 }
 
 func TestTable_TimeAfter(t *testing.T) {
@@ -430,39 +403,35 @@ func TestTable_TimeAfter(t *testing.T) {
 			{rtn(t, fixtures.LastDay, 0), rtn(t, fixtures.Day2, 0), rtn(t, fixtures.Day1, 0), rtn(t, fixtures.FirstDay, 0)},
 			{rtn(t, fixtures.LastDay, 0), rtn(t, fixtures.Day2, 0), rtn(t, fixtures.Day1, 0), rtn(t, fixtures.FirstDay, 0)},
 		})
-		o := NewWithT(t)
 		_, hasReturn := table.TimeAfter(fixtures.T(t, fixtures.DayAfter))
-		o.Expect(hasReturn).To(BeFalse())
+		assert.False(t, hasReturn)
 	})
 	t.Run("before data", func(t *testing.T) {
 		table := returns.NewTable([]returns.List{
 			{rtn(t, fixtures.LastDay, 0), rtn(t, fixtures.Day2, 0), rtn(t, fixtures.Day1, 0), rtn(t, fixtures.FirstDay, 0)},
 			{rtn(t, fixtures.LastDay, 0), rtn(t, fixtures.Day2, 0), rtn(t, fixtures.Day1, 0), rtn(t, fixtures.FirstDay, 0)},
 		})
-		o := NewWithT(t)
 		tm, hasReturn := table.TimeAfter(fixtures.T(t, fixtures.DayBefore))
-		o.Expect(hasReturn).To(BeTrue())
-		o.Expect(tm).To(Equal(fixtures.T(t, fixtures.FirstDay)))
+		assert.True(t, hasReturn)
+		assert.Equal(t, tm, fixtures.T(t, fixtures.FirstDay))
 	})
 	t.Run("on a friday", func(t *testing.T) {
 		table := returns.NewTable([]returns.List{
 			{rtn(t, fixtures.LastDay, 0), rtn(t, fixtures.Day2, 0), rtn(t, fixtures.Day1, 0), rtn(t, fixtures.FirstDay, 0)},
 			{rtn(t, fixtures.LastDay, 0), rtn(t, fixtures.Day2, 0), rtn(t, fixtures.Day1, 0), rtn(t, fixtures.FirstDay, 0)},
 		})
-		o := NewWithT(t)
 		after, hasReturn := table.TimeAfter(fixtures.T(t, fixtures.Day1))
-		o.Expect(hasReturn).To(BeTrue())
-		o.Expect(after).To(Equal(fixtures.T(t, fixtures.Day2)))
+		assert.True(t, hasReturn)
+		assert.Equal(t, after, fixtures.T(t, fixtures.Day2))
 	})
 	t.Run("on a monday", func(t *testing.T) {
 		table := returns.NewTable([]returns.List{
 			{rtn(t, fixtures.LastDay, 0), rtn(t, fixtures.Day2, 0), rtn(t, fixtures.Day1, 0), rtn(t, fixtures.FirstDay, 0)},
 			{rtn(t, fixtures.LastDay, 0), rtn(t, fixtures.Day2, 0), rtn(t, fixtures.Day1, 0), rtn(t, fixtures.FirstDay, 0)},
 		})
-		o := NewWithT(t)
 		after, hasReturn := table.TimeAfter(fixtures.T(t, fixtures.Day2))
-		o.Expect(hasReturn).To(BeTrue())
-		o.Expect(after).To(Equal(fixtures.T(t, fixtures.Day3)))
+		assert.True(t, hasReturn)
+		assert.Equal(t, after, fixtures.T(t, fixtures.Day3))
 	})
 }
 
@@ -472,39 +441,35 @@ func TestTable_TimeBefore(t *testing.T) {
 			{rtn(t, fixtures.LastDay, 0), rtn(t, fixtures.Day2, 0), rtn(t, fixtures.Day1, 0), rtn(t, fixtures.FirstDay, 0)},
 			{rtn(t, fixtures.LastDay, 0), rtn(t, fixtures.Day2, 0), rtn(t, fixtures.Day1, 0), rtn(t, fixtures.FirstDay, 0)},
 		})
-		o := NewWithT(t)
 		tm, hasReturn := table.TimeBefore(fixtures.T(t, fixtures.DayAfter))
-		o.Expect(hasReturn).To(BeTrue())
-		o.Expect(tm).To(Equal(fixtures.T(t, fixtures.LastDay)))
+		assert.True(t, hasReturn)
+		assert.Equal(t, tm, fixtures.T(t, fixtures.LastDay))
 	})
 	t.Run("before data", func(t *testing.T) {
 		table := returns.NewTable([]returns.List{
 			{rtn(t, fixtures.LastDay, 0), rtn(t, fixtures.Day2, 0), rtn(t, fixtures.Day1, 0), rtn(t, fixtures.FirstDay, 0)},
 			{rtn(t, fixtures.LastDay, 0), rtn(t, fixtures.Day2, 0), rtn(t, fixtures.Day1, 0), rtn(t, fixtures.FirstDay, 0)},
 		})
-		o := NewWithT(t)
 		_, hasReturn := table.TimeBefore(fixtures.T(t, fixtures.DayBefore))
-		o.Expect(hasReturn).To(BeFalse())
+		assert.False(t, hasReturn)
 	})
 	t.Run("on a Monday", func(t *testing.T) {
 		table := returns.NewTable([]returns.List{
 			{rtn(t, fixtures.LastDay, 0), rtn(t, fixtures.Day2, 0), rtn(t, fixtures.Day1, 0), rtn(t, fixtures.FirstDay, 0)},
 			{rtn(t, fixtures.LastDay, 0), rtn(t, fixtures.Day2, 0), rtn(t, fixtures.Day1, 0), rtn(t, fixtures.FirstDay, 0)},
 		})
-		o := NewWithT(t)
 		after, hasReturn := table.TimeBefore(fixtures.T(t, fixtures.Day2))
-		o.Expect(hasReturn).To(BeTrue())
-		o.Expect(after).To(Equal(fixtures.T(t, fixtures.Day1)))
+		assert.True(t, hasReturn)
+		assert.Equal(t, after, fixtures.T(t, fixtures.Day1))
 	})
 	t.Run("on a Friday", func(t *testing.T) {
 		table := returns.NewTable([]returns.List{
 			{rtn(t, fixtures.LastDay, 0), rtn(t, fixtures.Day2, 0), rtn(t, fixtures.Day1, 0), rtn(t, fixtures.FirstDay, 0)},
 			{rtn(t, fixtures.LastDay, 0), rtn(t, fixtures.Day2, 0), rtn(t, fixtures.Day1, 0), rtn(t, fixtures.FirstDay, 0)},
 		})
-		o := NewWithT(t)
 		after, hasReturn := table.TimeBefore(fixtures.T(t, fixtures.Day3))
-		o.Expect(hasReturn).To(BeTrue())
-		o.Expect(after).To(Equal(fixtures.T(t, fixtures.Day2)))
+		assert.True(t, hasReturn)
+		assert.Equal(t, after, fixtures.T(t, fixtures.Day2))
 	})
 }
 
@@ -514,13 +479,12 @@ func TestTable_Lists(t *testing.T) {
 		{rtn(t, fixtures.Day3, 0.02), rtn(t, fixtures.Day2, -0.02), rtn(t, fixtures.Day1, 0.002)},
 	})
 
-	o := NewWithT(t)
 	lists := table.Lists()
-	o.Expect(lists).To(HaveLen(2))
-	o.Expect(table.ColumnValues()).To(Equal([][]float64{
+	assert.Len(t, lists, 2)
+	assert.Equal(t, table.ColumnValues(), [][]float64{
 		{0.01, -0.01},
 		{-0.02, 0.002},
-	}))
+	})
 }
 
 func TestTable_Join(t *testing.T) {
@@ -532,12 +496,11 @@ func TestTable_Join(t *testing.T) {
 	})
 	table := a.Join(b)
 
-	o := NewWithT(t)
-	o.Expect(table.NumberOfRows()).To(Equal(2))
-	o.Expect(table.ColumnValues()).To(Equal([][]float64{
+	assert.Equal(t, table.NumberOfRows(), 2)
+	assert.Equal(t, table.ColumnValues(), [][]float64{
 		{+0.01, -0.01},
 		{-0.02, 0.002},
-	}))
+	})
 }
 
 func TestColumnGroup(t *testing.T) {
@@ -551,27 +514,25 @@ func TestColumnGroup(t *testing.T) {
 		})
 		updated = updated.AddColumn(returns.List{rtn(t, fixtures.Day1, 9000)})
 
-		o := NewWithT(t)
-
-		o.Expect(updated.ColumnValues()).To(Equal([][]float64{
+		assert.Equal(t, updated.ColumnValues(), [][]float64{
 			{100},
 			{100},
 			{1},
 			{3},
 			{9000},
-		}))
+		})
 
 		groupReturns := updated.ColumnGroupLists(group)
 
-		o.Expect(group.Length()).To(Equal(2))
+		assert.Equal(t, group.Length(), 2)
 
-		o.Expect(groupReturns).To(HaveLen(2))
-		o.Expect(groupReturns[0]).To(Equal(returns.List{
+		assert.Len(t, groupReturns, 2)
+		assert.Equal(t, groupReturns[0], returns.List{
 			rtn(t, fixtures.Day1, 1),
-		}))
-		o.Expect(groupReturns[1]).To(Equal(returns.List{
+		})
+		assert.Equal(t, groupReturns[1], returns.List{
 			rtn(t, fixtures.Day1, 3),
-		}))
+		})
 	})
 
 	t.Run("when returns outside of group time range", func(t *testing.T) {
@@ -584,10 +545,9 @@ func TestColumnGroup(t *testing.T) {
 		updated = updated.AddColumn(returns.List{rtn(t, fixtures.Day3, 420)})
 
 		groupReturns := updated.ColumnGroupLists(group)
-		o := NewWithT(t)
-		o.Expect(groupReturns).To(HaveLen(2))
-		o.Expect(groupReturns[0]).To(HaveLen(0))
-		o.Expect(groupReturns[1]).To(HaveLen(0))
+		assert.Len(t, groupReturns, 2)
+		assert.Len(t, groupReturns[0], 0)
+		assert.Len(t, groupReturns[1], 0)
 	})
 }
 
@@ -595,9 +555,7 @@ func TestTable_HasRow(t *testing.T) {
 	t.Run("empty", func(t *testing.T) {
 		var table returns.Table
 
-		o := NewWithT(t)
-
-		o.Expect(table.HasRow(fixtures.T(t, fixtures.Day0))).To(BeFalse())
+		assert.False(t, table.HasRow(fixtures.T(t, fixtures.Day0)))
 	})
 
 	t.Run("one return", func(t *testing.T) {
@@ -605,9 +563,7 @@ func TestTable_HasRow(t *testing.T) {
 			{returns.New(fixtures.T(t, fixtures.Day0), 0)},
 		})
 
-		o := NewWithT(t)
-
-		o.Expect(table.HasRow(fixtures.T(t, fixtures.Day0))).To(BeTrue())
+		assert.True(t, table.HasRow(fixtures.T(t, fixtures.Day0)))
 	})
 
 	t.Run("between", func(t *testing.T) {
@@ -616,9 +572,7 @@ func TestTable_HasRow(t *testing.T) {
 			{returns.New(fixtures.T(t, fixtures.Day2), 0)},
 		})
 
-		o := NewWithT(t)
-
-		o.Expect(table.HasRow(fixtures.T(t, fixtures.Day1))).To(BeFalse())
+		assert.False(t, table.HasRow(fixtures.T(t, fixtures.Day1)))
 	})
 }
 
@@ -628,25 +582,22 @@ func TestTable_ColumnGroupValues(t *testing.T) {
 		{rtn(t, fixtures.Day2, 3), rtn(t, fixtures.Day1, 2)},
 		{rtn(t, fixtures.Day2, 4), rtn(t, fixtures.Day1, 5)},
 	})
-	o := NewWithT(t)
-	o.Expect(updated.ColumnGroupValues(group)).To(Equal([][]float64{
+	assert.Equal(t, updated.ColumnGroupValues(group), [][]float64{
 		{3, 2},
 		{4, 5},
-	}))
+	})
 }
 
 func TestTable_Row(t *testing.T) {
 	t.Run("empty", func(t *testing.T) {
 		var table returns.Table
 		_, found := table.Row(fixtures.T(t, fixtures.Day0))
-		o := NewWithT(t)
-		o.Expect(found).To(BeFalse())
+		assert.False(t, found)
 	})
 }
 
 func TestDateAlignedReturns(t *testing.T) {
 	t.Run("one asset has newer data", func(t *testing.T) {
-		please := NewWithT(t)
 
 		r1 := returns.List{
 			{2, fixtures.T(t, "2020-01-05")},
@@ -665,7 +616,7 @@ func TestDateAlignedReturns(t *testing.T) {
 
 		table := returns.NewTable([]returns.List{r1, r2})
 
-		please.Expect(table.Lists()).To(Equal(returns.NewTable([]returns.List{
+		assert.Equal(t, table.Lists(), returns.NewTable([]returns.List{
 			{
 				{2, fixtures.T(t, "2020-01-04")},
 				{5, fixtures.T(t, "2020-01-03")},
@@ -678,11 +629,10 @@ func TestDateAlignedReturns(t *testing.T) {
 				{3, fixtures.T(t, "2020-01-02")},
 				{1, fixtures.T(t, "2020-01-01")},
 			},
-		}).Lists()))
+		}).Lists())
 	})
 
 	t.Run("both assets have same duration of data", func(t *testing.T) {
-		please := NewWithT(t)
 
 		r1 := returns.List{
 			{2, fixtures.T(t, "2020-01-04")},
@@ -700,7 +650,7 @@ func TestDateAlignedReturns(t *testing.T) {
 
 		table := returns.NewTable([]returns.List{r1, r2})
 
-		please.Expect(table.Lists()).To(Equal(returns.NewTable([]returns.List{
+		assert.Equal(t, table.Lists(), returns.NewTable([]returns.List{
 			{
 				{2, fixtures.T(t, "2020-01-04")},
 				{5, fixtures.T(t, "2020-01-03")},
@@ -713,11 +663,10 @@ func TestDateAlignedReturns(t *testing.T) {
 				{3, fixtures.T(t, "2020-01-02")},
 				{1, fixtures.T(t, "2020-01-01")},
 			},
-		}).Lists()))
+		}).Lists())
 	})
 
 	t.Run("one asset has longer history", func(t *testing.T) {
-		please := NewWithT(t)
 
 		r1 := returns.List{
 			{2, fixtures.T(t, "2020-01-05")},
@@ -736,7 +685,7 @@ func TestDateAlignedReturns(t *testing.T) {
 
 		table := returns.NewTable([]returns.List{r1, r2})
 
-		please.Expect(table.Lists()).To(Equal(returns.NewTable([]returns.List{
+		assert.Equal(t, table.Lists(), returns.NewTable([]returns.List{
 			{
 				{2, fixtures.T(t, "2020-01-05")},
 				{2, fixtures.T(t, "2020-01-04")},
@@ -749,11 +698,10 @@ func TestDateAlignedReturns(t *testing.T) {
 				{1, fixtures.T(t, "2020-01-03")},
 				{3, fixtures.T(t, "2020-01-02")},
 			},
-		}).Lists()))
+		}).Lists())
 	})
 
 	t.Run("an asset has only one return", func(t *testing.T) {
-		please := NewWithT(t)
 
 		r1 := returns.List{
 			{2, fixtures.T(t, "2020-01-05")},
@@ -768,19 +716,17 @@ func TestDateAlignedReturns(t *testing.T) {
 
 		table := returns.NewTable([]returns.List{r1, r2})
 
-		please.Expect(table.Lists()).To(Equal(returns.NewTable([]returns.List{
+		assert.Equal(t, table.Lists(), returns.NewTable([]returns.List{
 			{
 				{2, fixtures.T(t, "2020-01-05")},
 			},
 			{
 				{4, fixtures.T(t, "2020-01-05")},
 			},
-		}).Lists()))
+		}).Lists())
 	})
 
 	t.Run("one asset has no data", func(t *testing.T) {
-		please := NewWithT(t)
-
 		r1 := returns.List{
 			{2, fixtures.T(t, "2020-01-04")},
 			{5, fixtures.T(t, "2020-01-03")},
@@ -792,14 +738,12 @@ func TestDateAlignedReturns(t *testing.T) {
 
 		table := returns.NewTable([]returns.List{r1, r2})
 
-		please.Expect(table.NumberOfColumns()).To(Equal(2))
-		please.Expect(table.List(0)).To(HaveLen(0))
-		please.Expect(table.List(1)).To(HaveLen(0))
+		assert.Equal(t, table.NumberOfColumns(), 2)
+		assert.Len(t, table.List(0), 0)
+		assert.Len(t, table.List(1), 0)
 	})
 
 	t.Run("one asset has missing internal data", func(t *testing.T) {
-		please := NewWithT(t)
-
 		r1 := returns.List{
 			{2, fixtures.T(t, "2020-01-04")},
 			{5, fixtures.T(t, "2020-01-03")},
@@ -816,13 +760,13 @@ func TestDateAlignedReturns(t *testing.T) {
 
 		table := returns.NewTable([]returns.List{r1, r2})
 
-		please.Expect(table.NumberOfColumns()).To(Equal(2))
-		please.Expect(table.List(0)).To(Equal(r1))
-		please.Expect(table.List(1)).To(Equal(returns.List{
+		assert.Equal(t, table.NumberOfColumns(), 2)
+		assert.Equal(t, table.List(0), r1)
+		assert.Equal(t, table.List(1), returns.List{
 			{2, fixtures.T(t, "2020-01-04")},
 			{0, fixtures.T(t, "2020-01-03")},
 			{1, fixtures.T(t, "2020-01-02")},
 			{1, fixtures.T(t, "2020-01-01")},
-		}))
+		})
 	})
 }
