@@ -7,11 +7,11 @@ import (
 )
 
 type Result struct {
-	ReturnsTable       returns.Table `json:"returnsTable"`
-	Weights            [][]float64   `json:"historicalWeights"`
-	FinalPolicyWeights []float64     `json:"finalPolicyWeights"`
-	RebalanceTimes     []time.Time   `json:"rebalanceDates"`
-	PolicyUpdateTimes  []time.Time   `json:"policyUpdatesDates"`
+	ReturnsTable       returns.Table `json:"returnsTable"       bson:"returnsTable"`
+	Weights            [][]float64   `json:"weights"            bson:"weights"`
+	FinalPolicyWeights []float64     `json:"policyWeights"      bson:"policyWeights"`
+	RebalanceTimes     []time.Time   `json:"rebalanceDates"     bson:"rebalanceDates"`
+	PolicyUpdateTimes  []time.Time   `json:"policyUpdatesDates" bson:"policyUpdatesDates"`
 }
 
 func (result Result) Returns() returns.List {
