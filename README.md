@@ -1,4 +1,4 @@
-# Portfolio
+# Portfolio [![Continuous Integration](https://github.com/portfoliotree/portfolio/actions/workflows/go.yml/badge.svg)](https://github.com/portfoliotree/portfolio/actions/workflows/go.yml)
 
 This module contains quantitative portfolio analysis equations, portfolio back-testing, and asset data organization/cleaning data structures.
 
