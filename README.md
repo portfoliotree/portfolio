@@ -2,6 +2,8 @@
 
 This module contains quantitative portfolio analysis equations, portfolio back-testing, and asset data organization/cleaning data structures.
 
+This module will continue to work on Windows, MacOS, and Linux.
+
 While our main focus is our website.
 We value community engagement and will put effort into reviewing contributions and fixing issues on this repository.
 
