@@ -11,7 +11,7 @@ We value community engagement and will put effort into reviewing contributions a
 
 ## Getting Started
 
-1. Make sure you have [a sufficiently new Go SDK installed](https://go.dev/dl/) installed (see ./go.mod for the minimum required version)
+1. Make sure you have [a sufficiently new Go SDK installed](https://go.dev/dl/) installed (see [the module file](./go.mod) for the minimum required version)
 2. Get the package by running `go get github.com/portfoliotree/portfolio` in your terminal
 
 ## DISCLAIMER
