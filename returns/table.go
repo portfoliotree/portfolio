@@ -208,9 +208,7 @@ func (table Table) TimeAfter(tm time.Time) (time.Time, bool) {
 	if tm.After(table.LastTime()) {
 		return time.Time{}, false
 	}
-	index := indexOfClosest(table.times, func(t time.Time) time.Time {
-		return t
-	}, tm)
+	index := indexOfClosest(table.times, identity[time.Time], tm)
 	next := indexOrEmpty(table.times, index-1)
 	return next, !next.IsZero()
 }
@@ -222,12 +220,12 @@ func (table Table) TimeBefore(tm time.Time) (time.Time, bool) {
 	if tm.Before(table.FirstTime()) {
 		return time.Time{}, false
 	}
-	index := indexOfClosest(table.times, func(t time.Time) time.Time {
-		return t
-	}, tm)
+	index := indexOfClosest(table.times, identity[time.Time], tm)
 	next := indexOrEmpty(table.times, index+1)
 	return next, !next.IsZero()
 }
+
+func identity[T any](t T) T { return t }
 
 func (table Table) Lists() []List {
 	result := make([]List, len(table.values))
