@@ -8,6 +8,7 @@ import (
 
 	"github.com/portfoliotree/round"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/portfoliotree/portfolio/backtest"
 	"github.com/portfoliotree/portfolio/backtest/backtestconfig"
@@ -90,6 +91,37 @@ func TestSpec_Run(t *testing.T) {
 		assert.NoError(t, err)
 
 		assert.Equal(t, result.ReturnsTable.NumberOfRows(), asset.Returns().Len())
+	})
+
+	t.Run("when called repeatedly", func(t *testing.T) {
+
+		alg := backtestconfig.EqualWeights{}
+		windowFunc := backtestconfig.OneDayWindow.Function
+		rebalanceIntervalFunc := backtestconfig.IntervalDaily.CheckFunction()
+		policyUpdateIntervalFunc := backtestconfig.IntervalDaily.CheckFunction()
+
+		asset := returns.List{
+			{Time: date("2021-01-07"), Value: 6.4},
+			{Time: date("2021-01-06"), Value: 3.2},
+			{Time: date("2021-01-05"), Value: 1.6},
+			{Time: date("2021-01-04"), Value: 0.8},
+			{Time: date("2021-01-03"), Value: 0.4},
+			{Time: date("2021-01-02"), Value: 0.2},
+			{Time: date("2021-01-01"), Value: 0.1},
+		}
+		assets := returns.NewTable([]returns.List{asset})
+		end, start, _ := assets.EndAndStartDates()
+
+		result, err := backtest.Run(context.Background(), end, start, assets, alg, windowFunc, rebalanceIntervalFunc, policyUpdateIntervalFunc)
+		require.NoError(t, err)
+		require.Equal(t, result.ReturnsTable.FirstTime(), start)
+		require.Equal(t, result.ReturnsTable.LastTime(), end)
+		for i := 0; i < 100; i++ {
+			result, err = backtest.Run(context.Background(), result.ReturnsTable.LastTime(), result.ReturnsTable.FirstTime(), assets, alg, windowFunc, rebalanceIntervalFunc, policyUpdateIntervalFunc)
+			require.NoError(t, err)
+		}
+		assert.Equal(t, result.ReturnsTable.FirstTime(), start)
+		assert.Equal(t, result.ReturnsTable.LastTime(), end)
 	})
 
 	t.Run("it responds to context cancellation", func(t *testing.T) {
