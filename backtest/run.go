@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	dateLayout = "2006-01-02"
+	dateLayout = time.DateOnly
 )
 
 type (

@@ -345,7 +345,7 @@ func TestTruncateToOverlappingPeriods(t *testing.T) {
 }
 
 func date(str string) time.Time {
-	d, err := time.Parse("2006-01-02", str)
+	d, err := time.Parse(time.DateOnly, str)
 	if err != nil {
 		panic(fmt.Errorf("failed to parse date %q: %s", str, err))
 	}

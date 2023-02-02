@@ -541,6 +541,6 @@ func randomWeights(_ context.Context, _ time.Time, _ returns.Table, currentWeigh
 }
 
 func date(str string) time.Time {
-	d, _ := time.Parse("2006-01-02", str)
+	d, _ := time.Parse(time.DateOnly, str)
 	return d
 }

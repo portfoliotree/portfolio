@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-const dateLayout = "2006-01-02"
+const dateLayout = time.DateOnly
 
 const (
 	Day0      = "2022-10-20" // Thursday

@@ -47,7 +47,7 @@ func Test_betweenIndexes(t *testing.T) {
 					month := len(list) - index
 					t1 := fixtures.T(t, fmt.Sprintf("2020-%02d-20", month+1))
 					t0 := fixtures.T(t, fmt.Sprintf("2020-%02d-20", month))
-					t.Logf("%s\t%s", t1.Format(DateLayout), t0.Format(DateLayout))
+					t.Logf("%s\t%s", t1.Format(time.DateOnly), t0.Format(time.DateOnly))
 
 					i1, i0 := lowAndHighIndexesWithinTimes(list, t1, t0, func(r Return) time.Time {
 						return r.Time

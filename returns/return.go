@@ -5,8 +5,6 @@ import (
 	"time"
 )
 
-const DateLayout = "2006-01-02"
-
 type Return struct {
 	Value float64   `json:"value" bson:"value"`
 	Time  time.Time `json:"time" bson:"time"`
