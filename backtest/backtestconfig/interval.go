@@ -99,12 +99,7 @@ func Monthly() func(t time.Time, currentWeights []float64) bool {
 }
 
 func isFirstMonthInQuarter(month time.Month) bool {
-	switch month {
-	case time.January, time.April, time.July, time.October:
-		return true
-	default:
-		return false
-	}
+	return (month-1)%3 == 0
 }
 
 func Quarterly() func(t time.Time, _ []float64) bool {
