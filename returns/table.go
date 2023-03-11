@@ -319,6 +319,13 @@ type ColumnGroup struct {
 	index, length int
 }
 
+func (table Table) ColumnGroup() ColumnGroup {
+	return ColumnGroup{
+		index:  0,
+		length: len(table.values),
+	}
+}
+
 func (group ColumnGroup) Length() int { return group.length }
 
 func (table Table) AddColumnGroup(lists []List) (ColumnGroup, Table) {
