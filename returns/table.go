@@ -405,3 +405,38 @@ func (table Table) RangeIndexes(last, first time.Time) (end int, start int) {
 	lastIdx, firstIdx := lowAndHighIndexesWithinTimes(table.times, last, first, tmFn)
 	return lastIdx, firstIdx
 }
+
+type encodedColumnGroup struct {
+	Index  int `json:"index" bson:"index"`
+	Length int `json:"length" bson:"length"`
+}
+
+func (group *ColumnGroup) UnmarshalBSON(buf []byte) error {
+	var ecg encodedColumnGroup
+	err := bson.Unmarshal(buf, &ecg)
+	group.index = ecg.Index
+	group.length = ecg.Length
+	return err
+}
+
+func (group ColumnGroup) MarshalBSON() ([]byte, error) {
+	return bson.Marshal(encodedColumnGroup{
+		Index:  group.index,
+		Length: group.length,
+	})
+}
+
+func (group *ColumnGroup) UnmarshalJSON(buf []byte) error {
+	var ecg encodedColumnGroup
+	err := json.Unmarshal(buf, &ecg)
+	group.index = ecg.Index
+	group.length = ecg.Length
+	return err
+}
+
+func (group ColumnGroup) MarshalJSON() ([]byte, error) {
+	return json.Marshal(encodedColumnGroup{
+		Index:  group.index,
+		Length: group.length,
+	})
+}
