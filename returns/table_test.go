@@ -359,7 +359,7 @@ func TestTable_Risks(t *testing.T) {
 		{rtn(t, fixtures.Day2, -0.02), rtn(t, fixtures.Day1, 0.03), rtn(t, fixtures.Day0, -0.01)},
 		{rtn(t, fixtures.Day2, +0.03), rtn(t, fixtures.Day1, 0.01), rtn(t, fixtures.Day0, +0.01)},
 	})
-	result := table.Risks()
+	result := table.RisksFromStdDev()
 	_ = round.Recursive(result, 4)
 	assert.Equal(t, result, []float64{0.0265, 0.0115})
 }
@@ -392,7 +392,7 @@ func TestTable_ExpectedRisk(t *testing.T) {
 	result := table.ExpectedRisk([]float64{0.5, 0.5})
 	result = round.Decimal(result, 4)
 	assert.Equal(t, result, 0.0087)
-	risks := table.Risks()
+	risks := table.RisksFromStdDev()
 	assert.Less(t, result, risks[0])
 	assert.Less(t, result, risks[1])
 }

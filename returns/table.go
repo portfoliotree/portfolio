@@ -254,39 +254,55 @@ func (table Table) CorrelationMatrixValues() [][]float64 {
 }
 
 func (table Table) ExpectedRisk(weights []float64) float64 {
-	risks := table.Risks()
+	risks := table.RisksFromStdDev()
 	r, _, _ := calculations.RiskFromRiskContribution(risks, weights, table.CorrelationMatrix())
 	return r
 }
 
-func (table Table) Risks() []float64 {
+func (table Table) RiskFromStdDev(column int) float64 {
+	return calculations.RiskFromStdDev(table.values[column])
+}
+
+func (table Table) RisksFromStdDev() []float64 {
 	result := make([]float64, table.NumberOfColumns())
-	for i, column := range table.values {
-		result[i] = calculations.RiskFromStdDev(column)
+	for i := range table.values {
+		result[i] = table.RiskFromStdDev(i)
 	}
 	return result
 }
 
+func (table Table) AnnualizedRisk(column int) float64 {
+	return calculations.AnnualizeRisk(table.RiskFromStdDev(column), calculations.PeriodsPerYear)
+}
+
 func (table Table) AnnualizedRisks() []float64 {
-	result := table.Risks()
-	for i, risk := range result {
-		result[i] = calculations.AnnualizeRisk(risk, calculations.PeriodsPerYear)
+	result := make([]float64, table.NumberOfColumns())
+	for i := range result {
+		result[i] = table.AnnualizedRisk(i)
 	}
 	return result
+}
+
+func (table Table) TimeWeightedReturn(column int) float64 {
+	return calculations.AnnualizedTimeWeightedReturn(table.values[column], calculations.PeriodsPerYear)
 }
 
 func (table Table) TimeWeightedReturns() []float64 {
 	result := make([]float64, table.NumberOfColumns())
-	for i, column := range table.values {
-		result[i] = calculations.AnnualizedTimeWeightedReturn(column, calculations.PeriodsPerYear)
+	for i := range table.values {
+		result[i] = table.TimeWeightedReturn(i)
 	}
 	return result
 }
 
+func (table Table) AnnualizedArithmeticReturn(column int) float64 {
+	return calculations.AnnualizedArithmeticReturn(table.values[column])
+}
+
 func (table Table) AnnualizedArithmeticReturns() []float64 {
 	result := make([]float64, table.NumberOfColumns())
-	for i, column := range table.values {
-		result[i] = calculations.AnnualizedArithmeticReturn(column)
+	for i := range table.values {
+		result[i] = table.AnnualizedArithmeticReturn(i)
 	}
 	return result
 }
