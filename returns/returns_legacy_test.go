@@ -286,9 +286,75 @@ func TestReturns_TruncateToDateRange_start_and_end_are_beyond_return_range(t *te
 	})
 }
 
-func TestTruncateToOverlappingPeriods(t *testing.T) {
+func TestTable_AddTable(t *testing.T) {
+	t.Run("add to zero table", func(t *testing.T) {
+		var (
+			zero  returns.Table
+			other = returns.NewTable([]returns.List{
+				{
+					{Time: date("2021-06-25"), Value: 0.02},
+					{Time: date("2021-06-24"), Value: -0.01},
+				},
+			})
+		)
+		updated, group := zero.AddTable(other)
+		assert.Zero(t, zero)
+		assert.Equal(t, other.Times(), updated.Times())
+		assert.Equal(t, other.ColumnValues(), updated.ColumnValues())
+		assert.Equal(t, 1, group.Length())
+	})
 
-	lists := []returns.Table{
+	t.Run("add to non-zero table", func(t *testing.T) {
+		var (
+			table = returns.NewTable([]returns.List{
+				{
+					{Time: date("2021-06-25"), Value: 0.01},
+					{Time: date("2021-06-24"), Value: -0.01},
+				},
+			})
+			other = returns.NewTable([]returns.List{
+				{
+					{Time: date("2021-06-25"), Value: 0.02},
+					{Time: date("2021-06-24"), Value: -0.02},
+				},
+			})
+		)
+		updated, group := table.AddTable(other)
+
+		t.Run("the receiver has not changed", func(t *testing.T) {
+			assert.Equal(t, 2, table.NumberOfRows())
+			assert.Equal(t, 1, table.NumberOfColumns())
+			assert.Equal(t, [][]float64{{0.01, -0.01}}, table.ColumnValues())
+		})
+
+		t.Run("the other table has not been changed", func(t *testing.T) {
+			assert.Equal(t, 2, other.NumberOfRows())
+			assert.Equal(t, 1, other.NumberOfColumns())
+			assert.Equal(t, [][]float64{{0.02, -0.02}}, other.ColumnValues())
+		})
+
+		t.Run("the updated table has the correct data", func(t *testing.T) {
+			assert.Equal(t, 2, updated.NumberOfRows())
+			assert.Equal(t, 2, updated.NumberOfColumns())
+			assert.Equal(t, []time.Time{
+				date("2021-06-25"),
+				date("2021-06-24"),
+			}, updated.Times())
+			assert.Equal(t, [][]float64{
+				{0.01, -0.01},
+				{0.02, -0.02},
+			}, updated.ColumnValues())
+		})
+
+		t.Run("the group gets the parameter", func(t *testing.T) {
+			groupAsTable := updated.ColumnGroupAsTable(group)
+			assert.True(t, groupAsTable.Equal(other))
+		})
+	})
+}
+
+func TestTruncateToOverlappingPeriods(t *testing.T) {
+	tables := []returns.Table{
 		returns.NewTable([]returns.List{
 			{
 				{4, date("2020-01-09")},
@@ -329,7 +395,7 @@ func TestTruncateToOverlappingPeriods(t *testing.T) {
 		}),
 	}
 
-	truncated, end, start, err := returns.AlignTables(lists...)
+	truncated, end, start, err := returns.AlignTables(tables...)
 	assert.NoError(t, err)
 	assert.Equal(t, end, date("2020-01-08"))
 	assert.Equal(t, start, date("2020-01-03"))
