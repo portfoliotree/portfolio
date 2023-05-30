@@ -6,9 +6,11 @@ import (
 	"sort"
 	"time"
 
-	"github.com/portfoliotree/round"
 	"go.mongodb.org/mongo-driver/bson"
+	"golang.org/x/exp/slices"
 	"gonum.org/v1/gonum/mat"
+
+	"github.com/portfoliotree/round"
 
 	"github.com/portfoliotree/portfolio/calculations"
 )
@@ -128,6 +130,11 @@ func (table Table) AddColumn(list List) Table {
 		return table.addInitialColumn(list)
 	}
 	return table.addAdditionalColumn(list)
+}
+
+func (table Table) Equal(other Table) bool {
+	return slices.EqualFunc(table.times, other.times, time.Time.Equal) &&
+		slices.EqualFunc(table.values, other.values, slices.Equal[float64])
 }
 
 func (table Table) AddColumns(lists []List) Table {
