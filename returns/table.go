@@ -121,6 +121,15 @@ func (table Table) HasRow(tm time.Time) bool {
 	return found
 }
 
+func (table Table) column(columnIndex int, list List) {
+	for i, t := range table.times {
+		list[i].Time = t
+	}
+	for i, v := range table.values[columnIndex] {
+		list[i].Value = v
+	}
+}
+
 func (table Table) AddColumn(list List) Table {
 	//if !table.isRoot {
 	//	panic("modifying a sliced Table is prohibited")
@@ -363,6 +372,27 @@ func (table Table) AddColumnGroup(lists []List) (ColumnGroup, Table) {
 	}, updated
 }
 
+func (table Table) AddTable(other Table) (Table, ColumnGroup) {
+	updated := table
+	if len(table.values) == 0 {
+		updated = other
+		return other, ColumnGroup{
+			index:  0,
+			length: len(other.values),
+		}
+	}
+	initialColumnCount := len(table.values)
+	list := make(List, len(other.times))
+	for columnIndex := range other.values {
+		other.column(columnIndex, list)
+		updated = updated.AddColumn(list)
+	}
+	return updated, ColumnGroup{
+		index:  initialColumnCount,
+		length: len(other.values),
+	}
+}
+
 func (table Table) ColumnGroupColumnIndex(group ColumnGroup, groupIndex int) (columnIndex int) {
 	columnIndex = group.index + groupIndex
 
@@ -412,7 +442,7 @@ func AlignTables(tables ...Table) (_ []Table, end, start time.Time, _ error) {
 	)
 	for _, rl := range tables {
 		var group ColumnGroup
-		group, table = table.AddColumnGroup(rl.Lists())
+		table, group = table.AddTable(rl)
 		groups = append(groups, group)
 	}
 	result := make([]Table, len(tables))
