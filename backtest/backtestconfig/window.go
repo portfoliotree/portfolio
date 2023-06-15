@@ -22,6 +22,10 @@ const (
 
 func (dur Window) String() string { return string(dur) }
 
+func (dur Window) Options() []Window {
+	return Windows()
+}
+
 func Windows() []Window {
 	return []Window{
 		OneDayWindow,

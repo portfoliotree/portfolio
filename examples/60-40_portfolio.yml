@@ -1,0 +1,9 @@
+---
+type: Portfolio
+spec:
+  name: 60/40
+  benchmark: BIGPX
+  assets: [ACWI, AGG]
+  policy:
+    weights: [60, 40]
+    rebalancing_interval: Quarterly

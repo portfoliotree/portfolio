@@ -457,7 +457,6 @@ func TestList_Between(t *testing.T) {
 
 	t.Run("end during weekend", func(t *testing.T) {
 		t.Run("on sunday", func(t *testing.T) {
-
 			twoWeeksOfReturns := returns.List{
 				{Time: fixtures.T(t, "2021-04-23")},
 				{Time: fixtures.T(t, "2021-04-22")},
@@ -487,7 +486,6 @@ func TestList_Between(t *testing.T) {
 		})
 
 		t.Run("on saturday", func(t *testing.T) {
-
 			twoWeeksOfReturns := returns.List{
 				{Time: fixtures.T(t, "2021-04-23")},
 				{Time: fixtures.T(t, "2021-04-22")},

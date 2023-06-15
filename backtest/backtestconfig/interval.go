@@ -21,6 +21,10 @@ const (
 	IntervalAnnually  Interval = "Annually"
 )
 
+func (t Interval) Options() []Interval {
+	return Intervals()
+}
+
 func Intervals() []Interval {
 	return []Interval{
 		IntervalNever,

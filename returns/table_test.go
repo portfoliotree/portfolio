@@ -598,7 +598,6 @@ func TestTable_Row(t *testing.T) {
 
 func TestDateAlignedReturns(t *testing.T) {
 	t.Run("one asset has newer data", func(t *testing.T) {
-
 		r1 := returns.List{
 			{2, fixtures.T(t, "2020-01-05")},
 			{2, fixtures.T(t, "2020-01-04")},
@@ -633,7 +632,6 @@ func TestDateAlignedReturns(t *testing.T) {
 	})
 
 	t.Run("both assets have same duration of data", func(t *testing.T) {
-
 		r1 := returns.List{
 			{2, fixtures.T(t, "2020-01-04")},
 			{5, fixtures.T(t, "2020-01-03")},
@@ -667,7 +665,6 @@ func TestDateAlignedReturns(t *testing.T) {
 	})
 
 	t.Run("one asset has longer history", func(t *testing.T) {
-
 		r1 := returns.List{
 			{2, fixtures.T(t, "2020-01-05")},
 			{2, fixtures.T(t, "2020-01-04")},
@@ -702,7 +699,6 @@ func TestDateAlignedReturns(t *testing.T) {
 	})
 
 	t.Run("an asset has only one return", func(t *testing.T) {
-
 		r1 := returns.List{
 			{2, fixtures.T(t, "2020-01-05")},
 		}

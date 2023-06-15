@@ -1,9 +1,13 @@
 package returns
 
 import (
+	"encoding/csv"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"io"
 	"sort"
+	"strconv"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -331,6 +335,41 @@ func (table Table) EndAndStartDates() (end, start time.Time, _ error) {
 		return time.Time{}, time.Time{}, errors.New("no overlap")
 	}
 	return table.LastTime(), table.FirstTime(), nil
+}
+
+func (table Table) WriteCSV(w io.Writer, columnNames []string) error {
+	if columnNames == nil {
+		columnNames = make([]string, table.NumberOfColumns())
+		for i := range columnNames {
+			columnNames[i] = strconv.Itoa(i)
+		}
+	}
+	if len(columnNames) != table.NumberOfColumns() {
+		return fmt.Errorf("incorrect number of column names provided")
+	}
+
+	cw := csv.NewWriter(w)
+	if err := cw.Write(append([]string{"Date"}, columnNames...)); err != nil {
+		return err
+	}
+	rowRecord := make([]string, table.NumberOfColumns()+1)
+	for i := 0; i < table.NumberOfRows(); i++ {
+		rowRecord[0] = table.times[i].Format(time.DateOnly)
+		for j := 0; j < table.NumberOfColumns(); j++ {
+			rowRecord[j+1] = fmt.Sprint(round.Decimal(table.values[j][i], 6))
+		}
+		if err := cw.Write(rowRecord); err != nil {
+			return err
+		}
+		if i%100 == 0 {
+			cw.Flush()
+			if err := cw.Error(); err != nil {
+				return err
+			}
+		}
+	}
+	cw.Flush()
+	return cw.Error()
 }
 
 func maxInt(a, b int) int {

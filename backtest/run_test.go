@@ -17,7 +17,6 @@ import (
 
 func TestSpec_Run(t *testing.T) {
 	t.Run("end date is before start date", func(t *testing.T) {
-
 		assets := returns.NewTable([]returns.List{
 			{{Time: date("2020-01-03")}, {Time: date("2020-01-02")}, {Time: date("2020-01-01")}},
 			{{Time: date("2020-01-03")}, {Time: date("2020-01-02")} /*{Time: date("2020-01-01")}*/},
@@ -27,7 +26,6 @@ func TestSpec_Run(t *testing.T) {
 		assert.Error(t, err)
 	})
 	t.Run("start date does not have a return", func(t *testing.T) {
-
 		rs := returns.NewTable([]returns.List{
 			{{Time: date("2020-01-03")}, {Time: date("2020-01-02")}, {Time: date("2020-01-01")}},
 			{{Time: date("2020-01-03")}, {Time: date("2020-01-02")} /*{Time: date("2020-01-01")}*/},
@@ -37,7 +35,6 @@ func TestSpec_Run(t *testing.T) {
 		assert.Error(t, err)
 	})
 	t.Run("end date does not have a return", func(t *testing.T) {
-
 		alg := backtestconfig.EqualWeights{}
 		windowFunc := backtestconfig.WindowNotSet.Function
 		rebalanceIntervalFunc := backtestconfig.IntervalDaily.CheckFunction()
@@ -54,7 +51,6 @@ func TestSpec_Run(t *testing.T) {
 		assert.Error(t, err)
 	})
 	t.Run("with no returns", func(t *testing.T) {
-
 		assets := returns.Table{}
 
 		alg := backtestconfig.EqualWeights{}
@@ -71,7 +67,6 @@ func TestSpec_Run(t *testing.T) {
 	})
 
 	t.Run("when there is one asset", func(t *testing.T) {
-
 		alg := backtestconfig.EqualWeights{}
 		windowFunc := backtestconfig.OneDayWindow.Function
 		rebalanceIntervalFunc := backtestconfig.IntervalDaily.CheckFunction()
@@ -94,7 +89,6 @@ func TestSpec_Run(t *testing.T) {
 	})
 
 	t.Run("when called repeatedly", func(t *testing.T) {
-
 		alg := backtestconfig.EqualWeights{}
 		windowFunc := backtestconfig.OneDayWindow.Function
 		rebalanceIntervalFunc := backtestconfig.IntervalDaily.CheckFunction()
@@ -125,7 +119,6 @@ func TestSpec_Run(t *testing.T) {
 	})
 
 	t.Run("it responds to context cancellation", func(t *testing.T) {
-
 		asset := returns.List{
 			{Time: date("2021-01-04"), Value: 0.8},
 			{Time: date("2021-01-03"), Value: 0.4},
@@ -157,7 +150,6 @@ func TestSpec_Run(t *testing.T) {
 	})
 
 	t.Run("daily rebalancing", func(t *testing.T) {
-
 		asset1 := returns.List{
 			{Time: date("2021-01-07"), Value: -0.1},
 			{Time: date("2021-01-06"), Value: 0.25},
@@ -193,7 +185,6 @@ func TestSpec_Run(t *testing.T) {
 	})
 
 	t.Run("when the policy is not implementable at first data", func(t *testing.T) {
-
 		asset1 := returns.List{
 			{Time: date("2021-04-23"), Value: -0.1},
 			{Time: date("2021-04-22"), Value: 0.25},
@@ -242,7 +233,6 @@ func TestSpec_Run(t *testing.T) {
 	})
 
 	t.Run("composite returns are calculated correctly", func(t *testing.T) {
-
 		asset1 := returns.List{
 			{Time: date("2021-04-04"), Value: 0.20},
 			{Time: date("2021-04-03"), Value: 0.10},
@@ -280,7 +270,6 @@ func TestSpec_Run(t *testing.T) {
 	})
 
 	t.Run("when a look back is set", func(t *testing.T) {
-
 		asset1 := returns.List{
 			{Time: date("2021-04-23"), Value: -0.1},
 			{Time: date("2021-04-22"), Value: 0.25},
@@ -352,7 +341,6 @@ func TestSpec_Run(t *testing.T) {
 
 func TestSpec_Run_weightHistory(t *testing.T) {
 	t.Run("single asset", func(t *testing.T) {
-
 		asset := returns.List{
 			{Time: date("2021-01-22")},
 			{Time: date("2021-01-21")},
@@ -425,7 +413,6 @@ func TestSpec_Run_weightHistory(t *testing.T) {
 	})
 
 	t.Run("two assets with weekly rebalancing", func(t *testing.T) {
-
 		asset1 := returns.List{
 			{Time: date("2021-01-22"), Value: 0.0},
 			{Time: date("2021-01-21"), Value: 0.0},

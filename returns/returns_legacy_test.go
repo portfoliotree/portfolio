@@ -35,7 +35,6 @@ func TestReturns(t *testing.T) {
 }
 
 func TestReturns_FirstAndLastPeriod(t *testing.T) {
-
 	rs := returns.List{
 		{2, date("2020-01-04")},
 		{1, date("2020-01-03")},
@@ -60,7 +59,6 @@ func toSlices(dense *mat.Dense) [][]float64 {
 
 func TestComposite_correlationMatrix(t *testing.T) {
 	t.Run("perfectly positively correlated", func(t *testing.T) {
-
 		assert.Equal(t,
 			toSlices(returns.NewTable([]returns.List{
 				{{Time: fixtures.T(t, fixtures.Day3), Value: 10}, {Time: fixtures.T(t, fixtures.Day2), Value: 20}, {Time: fixtures.T(t, fixtures.Day1), Value: 10}, {Time: fixtures.T(t, fixtures.Day0), Value: 20}},
@@ -74,7 +72,6 @@ func TestComposite_correlationMatrix(t *testing.T) {
 	})
 
 	t.Run("perfectly negatively correlated", func(t *testing.T) {
-
 		assert.Equal(t,
 			toSlices(returns.NewTable([]returns.List{
 				{{Time: fixtures.T(t, fixtures.Day3), Value: 10}, {Time: fixtures.T(t, fixtures.Day2), Value: 20}, {Time: fixtures.T(t, fixtures.Day1), Value: 10}, {Time: fixtures.T(t, fixtures.Day0), Value: 20}},
@@ -100,7 +97,6 @@ func TestComposite_correlationMatrix(t *testing.T) {
 
 func TestDateAlignedReturnsList_ExpectedRisk(t *testing.T) {
 	t.Run("with one asset", func(t *testing.T) {
-
 		list := returns.NewTable([]returns.List{{
 			{Time: fixtures.T(t, fixtures.Day2), Value: 1},
 			{Time: fixtures.T(t, fixtures.Day1), Value: -2 / 3},
@@ -111,7 +107,6 @@ func TestDateAlignedReturnsList_ExpectedRisk(t *testing.T) {
 	})
 
 	t.Run("with two assets and one has no weight", func(t *testing.T) {
-
 		list := returns.NewTable([]returns.List{
 			{{Value: 1}, {Value: -2 / 3}, {Value: .5}},
 			{{Value: .5}, {Value: .3}, {Value: .5}},
@@ -121,7 +116,6 @@ func TestDateAlignedReturnsList_ExpectedRisk(t *testing.T) {
 	})
 
 	t.Run("with two completely correlated assets", func(t *testing.T) {
-
 		list := returns.NewTable([]returns.List{
 			{{Value: 1}, {Value: -2 / 3}, {Value: .5}},
 			{{Value: 1}, {Value: -2 / 3}, {Value: .5}},
@@ -159,7 +153,6 @@ func TestDateAlignedReturnsList_ExpectedRisk(t *testing.T) {
 }
 
 func TestDateAlignedReturnsList_FirstAndLastSharedPeriod(t *testing.T) {
-
 	list := returns.NewTable([]returns.List{
 		{
 			{2, date("2020-01-05")},
@@ -182,7 +175,6 @@ func TestDateAlignedReturnsList_FirstAndLastSharedPeriod(t *testing.T) {
 }
 
 func TestReturnsList_FirstAndLastSharedPeriod_no_overlap(t *testing.T) {
-
 	list := returns.NewTable([]returns.List{
 		{
 			{2, date("2020-01-05")},
@@ -200,7 +192,6 @@ func TestReturnsList_FirstAndLastSharedPeriod_no_overlap(t *testing.T) {
 }
 
 func TestReturns_TruncateToDateRange(t *testing.T) {
-
 	table := returns.List{
 		{Time: date("2021-06-25"), Value: 1.0},
 		{Time: date("2021-06-24"), Value: 1.0},
@@ -221,7 +212,6 @@ func TestReturns_TruncateToDateRange(t *testing.T) {
 }
 
 func TestReturns_TruncateToDateRange_end_is_after_final_return(t *testing.T) {
-
 	table := returns.List{
 		{Time: date("2021-06-25"), Value: 1.0},
 		{Time: date("2021-06-24"), Value: 1.0},
@@ -241,7 +231,6 @@ func TestReturns_TruncateToDateRange_end_is_after_final_return(t *testing.T) {
 }
 
 func TestReturns_TruncateToDateRange_start_is_before_initial_return(t *testing.T) {
-
 	table := returns.List{
 		{Time: date("2021-06-25"), Value: 1.0},
 		{Time: date("2021-06-24"), Value: 1.0},
@@ -262,7 +251,6 @@ func TestReturns_TruncateToDateRange_start_is_before_initial_return(t *testing.T
 }
 
 func TestReturns_TruncateToDateRange_start_and_end_are_beyond_return_range(t *testing.T) {
-
 	table := returns.List{
 		{Time: date("2021-06-25"), Value: 1.0},
 		{Time: date("2021-06-24"), Value: 1.0},
@@ -548,7 +536,6 @@ func TestReturns_Within(t *testing.T) {
 }
 
 func TestReturns_ExcessReturns(t *testing.T) {
-
 	list := returns.List{
 		{Value: 420, Time: date("2021-10-07")}, // out of time range of o
 
