@@ -91,3 +91,9 @@ func doJSONRequest[T any](do func(r *http.Request) (*http.Response, error), req 
 func closeAndIgnoreErrors(closer io.Closer) {
 	_ = closer.Close()
 }
+
+// ComponentReturnsProvider is currently used for tests.
+type ComponentReturnsProvider interface {
+	ComponentReturnsList(ctx context.Context, component Component) (returns.List, error)
+	ComponentReturnsTable(ctx context.Context, component ...Component) (returns.Table, error)
+}

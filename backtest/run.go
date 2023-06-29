@@ -11,10 +11,6 @@ import (
 	"github.com/portfoliotree/portfolio/returns"
 )
 
-const (
-	dateLayout = time.DateOnly
-)
-
 type (
 	PolicyWeightCalculator interface {
 		PolicyWeights(ctx context.Context, today time.Time, assets returns.Table, currentWeights []float64) ([]float64, error)

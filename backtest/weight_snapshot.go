@@ -16,14 +16,6 @@ type WeightSnapshot struct {
 // 0 is the most recent and at len(list)-1 least recent.
 type WeightSnapshotList []WeightSnapshot
 
-func (list WeightSnapshotList) reverse() {
-	for i := 0; i < len(list)/2; i++ {
-		t := list[i]
-		list[i] = list[len(list)-1-i]
-		list[len(list)-1-i] = t
-	}
-}
-
 func (list WeightSnapshotList) Times() []time.Time {
 	var result []time.Time
 	for _, t := range list {

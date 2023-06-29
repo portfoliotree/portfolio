@@ -99,7 +99,7 @@ func TestDateAlignedReturnsList_ExpectedRisk(t *testing.T) {
 	t.Run("with one asset", func(t *testing.T) {
 		list := returns.NewTable([]returns.List{{
 			{Time: fixtures.T(t, fixtures.Day2), Value: 1},
-			{Time: fixtures.T(t, fixtures.Day1), Value: -2 / 3},
+			{Time: fixtures.T(t, fixtures.Day1), Value: -2.0 / 3},
 			{Time: fixtures.T(t, fixtures.Day0), Value: .5},
 		}})
 
@@ -108,7 +108,7 @@ func TestDateAlignedReturnsList_ExpectedRisk(t *testing.T) {
 
 	t.Run("with two assets and one has no weight", func(t *testing.T) {
 		list := returns.NewTable([]returns.List{
-			{{Value: 1}, {Value: -2 / 3}, {Value: .5}},
+			{{Value: 1}, {Value: -2.0 / 3}, {Value: .5}},
 			{{Value: .5}, {Value: .3}, {Value: .5}},
 		})
 
@@ -117,8 +117,8 @@ func TestDateAlignedReturnsList_ExpectedRisk(t *testing.T) {
 
 	t.Run("with two completely correlated assets", func(t *testing.T) {
 		list := returns.NewTable([]returns.List{
-			{{Value: 1}, {Value: -2 / 3}, {Value: .5}},
-			{{Value: 1}, {Value: -2 / 3}, {Value: .5}},
+			{{Value: 1}, {Value: -2.0 / 3}, {Value: .5}},
+			{{Value: 1}, {Value: -2.0 / 3}, {Value: .5}},
 		})
 
 		compositeRisk := list.ExpectedRisk([]float64{0.2, 0.8})

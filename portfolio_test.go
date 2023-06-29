@@ -162,7 +162,7 @@ func TestParse(t *testing.T) {
 	}
 }
 
-func ExamplePortfolio_Backtest() {
+func ExampleSpecification_Backtest() {
 	// language=yaml
 	const portfolioSpecYAML = `---
 type: Portfolio

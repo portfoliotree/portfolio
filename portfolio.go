@@ -17,6 +17,7 @@ import (
 	"github.com/portfoliotree/portfolio/backtest/backtestconfig"
 )
 
+// Specification models a portfolio.
 type Specification struct {
 	Name      string      `yaml:"name"`
 	Benchmark Component   `yaml:"benchmark"`
@@ -27,7 +28,9 @@ type Specification struct {
 	FileIndex int    `yaml:"-"`
 }
 
-type TypedSpecificationFile[S interface {
+// typedSpecificationFile may be exported some day.
+// For now, it provides a bit of indirection for specs and files.
+type typedSpecificationFile[S interface {
 	Specification
 }] struct {
 	ID   string `yaml:"id"`
@@ -58,7 +61,7 @@ func ParseSpecifications(r io.Reader) ([]Specification, error) {
 	dec.KnownFields(true)
 	var result []Specification
 	for {
-		var spec TypedSpecificationFile[Specification]
+		var spec typedSpecificationFile[Specification]
 		if err := dec.Decode(&spec); err != nil {
 			if err == io.EOF {
 				return result, nil
@@ -247,6 +250,8 @@ func (pf *Specification) Values() url.Values {
 	return q
 }
 
+// Validate does some simple validations.
+// Server you should do additional validations.
 func (pf *Specification) Validate() error {
 	var list []error
 	for _, asset := range pf.Assets {
