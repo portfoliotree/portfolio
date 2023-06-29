@@ -5,7 +5,7 @@ go 1.20
 require (
 	github.com/portfoliotree/round v0.0.0-20221115082401-a830c3a8a159
 	github.com/stretchr/testify v1.8.4
-	go.mongodb.org/mongo-driver v1.11.2
+	go.mongodb.org/mongo-driver v1.12.0
 	golang.org/x/exp v0.0.0-20230321023759-10a507213a29
 	gonum.org/v1/gonum v0.12.0
 	gopkg.in/yaml.v3 v3.0.1
