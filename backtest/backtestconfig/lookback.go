@@ -15,11 +15,3 @@ func TruncateWithLookBack(end, start time.Time, dur Window, returns returns.List
 	}
 	return returns.Between(end, start)
 }
-
-func TruncateTableWithLookBack(end, start time.Time, dur Window, table returns.Table) returns.Table {
-	result := make([]returns.List, table.NumberOfColumns())
-	for i, l := range table.Lists() {
-		result[i] = TruncateWithLookBack(end, start, dur, l)
-	}
-	return returns.NewTable(result)
-}
