@@ -1,11 +1,13 @@
 package returns_test
 
 import (
+	"bytes"
 	"testing"
 	"time"
 
 	"github.com/portfoliotree/round"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/portfoliotree/portfolio/internal/fixtures"
 	"github.com/portfoliotree/portfolio/returns"
@@ -764,5 +766,19 @@ func TestDateAlignedReturns(t *testing.T) {
 			{1, fixtures.T(t, "2020-01-02")},
 			{1, fixtures.T(t, "2020-01-01")},
 		})
+	})
+}
+
+func TestTable_WriteCSV(t *testing.T) {
+	t.Run("exponent number", func(t *testing.T) {
+		expNum := -9.1e-05
+
+		table := returns.NewTable([]returns.List{{{Time: fixtures.T(t, fixtures.Day1), Value: expNum}}})
+
+		var buf bytes.Buffer
+		err := table.WriteCSV(&buf, []string{"mango"})
+
+		require.NoError(t, err)
+		assert.NotContains(t, buf.String(), "e-")
 	})
 }

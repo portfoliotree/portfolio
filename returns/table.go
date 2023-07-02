@@ -356,7 +356,7 @@ func (table Table) WriteCSV(w io.Writer, columnNames []string) error {
 	for i := 0; i < table.NumberOfRows(); i++ {
 		rowRecord[0] = table.times[i].Format(time.DateOnly)
 		for j := 0; j < table.NumberOfColumns(); j++ {
-			rowRecord[j+1] = fmt.Sprint(round.Decimal(table.values[j][i], 6))
+			rowRecord[j+1] = strconv.FormatFloat(round.Decimal(table.values[j][i], 6), 'f', -1, 64)
 		}
 		if err := cw.Write(rowRecord); err != nil {
 			return err
