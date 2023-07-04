@@ -42,6 +42,32 @@ func TestSpec_Run(t *testing.T) {
 		assert.Equal(t, date("2021-01-04"), bt.ReturnsTable.LastTime())
 		assert.Equal(t, date("2021-01-01"), bt.ReturnsTable.FirstTime())
 	})
+	t.Run("when alg returns values they are not changed", func(t *testing.T) {
+		assets := returns.NewTable([]returns.List{
+			{
+				{Time: date("2021-01-04"), Value: 0.8},
+				{Time: date("2021-01-03"), Value: 0.4},
+				{Time: date("2021-01-02"), Value: 0.2},
+				{Time: date("2021-01-01"), Value: 0.1},
+			},
+			{
+				{Time: date("2021-01-04"), Value: 0.8},
+				{Time: date("2021-01-03"), Value: 0.4},
+				{Time: date("2021-01-02"), Value: 0.2},
+				{Time: date("2021-01-01"), Value: 0.1},
+			},
+		})
+		windowFunc := backtestconfig.WindowNotSet.Function
+		rebalanceIntervalFunc := backtestconfig.IntervalDaily.CheckFunction()
+		policyUpdateIntervalFunc := backtestconfig.IntervalDaily.CheckFunction()
+
+		ws := []float64{.715, .315}
+		_, err := backtest.Run(context.Background(), date("2021-01-04"), date("2021-01-01"), assets, backtestconfig.PolicyWeightCalculatorFunc(func(_ context.Context, _ time.Time, _ returns.Table, currentWeights []float64) ([]float64, error) {
+			return ws, nil
+		}), windowFunc, rebalanceIntervalFunc, policyUpdateIntervalFunc)
+		assert.NoError(t, err)
+		assert.Equal(t, []float64{.715, .315}, ws)
+	})
 	t.Run("start date does not have a return", func(t *testing.T) {
 		rs := returns.NewTable([]returns.List{
 			{{Time: date("2020-01-03")}, {Time: date("2020-01-02")}, {Time: date("2020-01-01")}},
@@ -388,7 +414,7 @@ func TestSpec_Run_weightHistory(t *testing.T) {
 
 		assert.NoError(t, err)
 
-		assert.Equal(t, result.Weights, [][]float64{
+		assert.Equal(t, [][]float64{
 			{1},
 			{1},
 			{1},
@@ -400,7 +426,7 @@ func TestSpec_Run_weightHistory(t *testing.T) {
 			{1},
 			{1},
 			{1},
-		})
+		}, result.Weights)
 		assert.Equal(t, result.PolicyUpdateTimes, []time.Time{
 			date("2021-01-22"),
 			date("2021-01-21"),

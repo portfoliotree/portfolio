@@ -87,11 +87,11 @@ func Run(ctx context.Context, end, start time.Time, assetReturns returns.Table,
 		assetReturnValuesToday = historicReturns.MostRecentValues()
 
 		if shouldCalculatePolicy(today, updatedDailyWeights) && start != today {
-			var err error
-			policyWeights, err = alg.PolicyWeights(ctx, today, historicReturns, updatedWeights)
+			pw, err := alg.PolicyWeights(ctx, today, historicReturns, updatedWeights)
 			if err != nil {
 				return Result{}, err
 			}
+			copy(policyWeights, pw)
 
 			scaleToUnitRange(policyWeights)
 
@@ -99,10 +99,6 @@ func Run(ctx context.Context, end, start time.Time, assetReturns returns.Table,
 			result.PolicyUpdateTimes = append(result.PolicyUpdateTimes, today)
 			copy(result.FinalPolicyWeights, policyWeights)
 		}
-
-		weightsToday := make([]float64, len(updatedWeights))
-		copy(weightsToday, updatedWeights)
-		result.Weights = append(result.Weights, weightsToday)
 
 		ret := returns.Return{
 			Time: today,
@@ -132,6 +128,11 @@ func Run(ctx context.Context, end, start time.Time, assetReturns returns.Table,
 			rebalanceCount++
 			result.RebalanceTimes = append(result.RebalanceTimes, today)
 		}
+
+		weightsToday := make([]float64, len(updatedWeights))
+		copy(weightsToday, updatedWeights)
+		result.Weights = append(result.Weights, weightsToday)
+
 		copy(updatedDailyWeights, policyWeights)
 	}
 
@@ -180,13 +181,14 @@ func fetchPolicy(ctx context.Context, end, start time.Time, alg PolicyWeightCalc
 
 		setFloat64Slice(ws, 0)
 
-		policyWeights, err := alg.PolicyWeights(ctx, today, historicReturns, ws)
+		pw, err := alg.PolicyWeights(ctx, today, historicReturns, ws)
 		if err != nil {
 			if errors.Is(err, ErrorNotEnoughData{}) {
 				continue
 			}
 			return time.Time{}, nil, err
 		}
+		policyWeights := slices.Clone(pw)
 
 		if len(policyWeights) != assetReturns.NumberOfColumns() {
 			return time.Time{}, nil, fmt.Errorf("expected policy to have %d weights but got %d", assetReturns.NumberOfColumns(), len(policyWeights))
