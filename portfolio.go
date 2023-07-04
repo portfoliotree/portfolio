@@ -15,6 +15,7 @@ import (
 
 	"github.com/portfoliotree/portfolio/backtest"
 	"github.com/portfoliotree/portfolio/backtest/backtestconfig"
+	"github.com/portfoliotree/portfolio/returns"
 )
 
 // Specification models a portfolio.
@@ -90,8 +91,8 @@ func (pf *Specification) RemoveAsset(index int) error {
 	return nil
 }
 
-func (pf *Specification) Backtest(ctx context.Context, weightsAlgorithm backtestconfig.PolicyWeightCalculatorFunc) (backtest.Result, error) {
-	return pf.BacktestWithStartAndEndTime(ctx, time.Time{}, time.Time{}, weightsAlgorithm)
+func (pf *Specification) Backtest(ctx context.Context, assets returns.Table, weightsAlgorithm backtestconfig.PolicyWeightCalculatorFunc) (backtest.Result, error) {
+	return pf.BacktestWithStartAndEndTime(ctx, time.Time{}, time.Time{}, assets, weightsAlgorithm)
 }
 
 const (
@@ -134,7 +135,7 @@ func (pf *Specification) policyWeightFunction(weights backtestconfig.PolicyWeigh
 	}
 }
 
-func (pf *Specification) BacktestWithStartAndEndTime(ctx context.Context, start, end time.Time, weightsFn backtestconfig.PolicyWeightCalculatorFunc) (backtest.Result, error) {
+func (pf *Specification) BacktestWithStartAndEndTime(ctx context.Context, start, end time.Time, assets returns.Table, weightsFn backtestconfig.PolicyWeightCalculatorFunc) (backtest.Result, error) {
 	if err := pf.ensureEqualNumberOfWeightsAndAssets(); err != nil {
 		return backtest.Result{}, err
 	}
@@ -142,18 +143,6 @@ func (pf *Specification) BacktestWithStartAndEndTime(ctx context.Context, start,
 	weightsFn, err = pf.policyWeightFunction(weightsFn)
 	if err != nil {
 		return backtest.Result{}, err
-	}
-
-	assets, err := pf.AssetReturns(ctx)
-	if err != nil {
-		return backtest.Result{}, err
-	}
-
-	if start.IsZero() {
-		start = assets.FirstTime()
-	}
-	if end.IsZero() {
-		end = assets.LastTime()
 	}
 
 	return backtest.Run(ctx, end, start, assets, weightsFn,

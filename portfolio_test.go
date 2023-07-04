@@ -182,7 +182,11 @@ spec:
 	}
 
 	ctx := context.Background()
-	result, err := pf.Backtest(ctx, nil)
+	assets, err := pf.AssetReturns(ctx)
+	if err != nil {
+		panic(err)
+	}
+	result, err := pf.Backtest(ctx, assets, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -210,17 +214,6 @@ func TestPortfolio_Backtest(t *testing.T) {
 		ErrorSubstring string
 	}{
 		{
-			Name: "unknown asset",
-			Portfolio: portfolio.Specification{
-				Assets: []portfolio.Component{{ID: "UnknownAsset"}},
-				Policy: portfolio.Policy{
-					WeightsAlgorithm: portfolio.PolicyAlgorithmEqualWeights,
-				},
-			},
-			ctx:            context.Background(),
-			ErrorSubstring: "file does not exist",
-		},
-		{
 			Name: "wrong number of weights",
 			Portfolio: portfolio.Specification{
 				Assets: []portfolio.Component{{ID: "AAPL"}},
@@ -247,7 +240,7 @@ func TestPortfolio_Backtest(t *testing.T) {
 	} {
 		t.Run(tt.Name, func(t *testing.T) {
 			pf := tt.Portfolio
-			_, err := pf.Backtest(tt.ctx, nil)
+			_, err := pf.Backtest(tt.ctx, returns.Table{}, nil)
 			if tt.ErrorSubstring == "" {
 				assert.NoError(t, err)
 			} else {
@@ -263,7 +256,7 @@ func TestPortfolio_Backtest_custom_function(t *testing.T) {
 			{ID: "AAPL"},
 			{ID: "GOOG"},
 		},
-	}).Backtest(context.Background(), func(ctx context.Context, today time.Time, assets returns.Table, currentWeights []float64) ([]float64, error) {
+	}).Backtest(context.Background(), returns.NewTable([]returns.List{{}}), func(ctx context.Context, today time.Time, assets returns.Table, currentWeights []float64) ([]float64, error) {
 		return nil, fmt.Errorf("lemon")
 	})
 	assert.EqualError(t, err, "lemon")

@@ -25,6 +25,23 @@ func TestSpec_Run(t *testing.T) {
 		_, err := backtest.Run(context.Background(), date("2020-01-01"), date("2020-01-03"), assets, nil, nil, nil, nil)
 		assert.Error(t, err)
 	})
+	t.Run("when zero value times are passed", func(t *testing.T) {
+		assets := returns.NewTable([]returns.List{{
+			{Time: date("2021-01-04"), Value: 0.8},
+			{Time: date("2021-01-03"), Value: 0.4},
+			{Time: date("2021-01-02"), Value: 0.2},
+			{Time: date("2021-01-01"), Value: 0.1},
+		}})
+		alg := backtestconfig.EqualWeights{}
+		windowFunc := backtestconfig.WindowNotSet.Function
+		rebalanceIntervalFunc := backtestconfig.IntervalDaily.CheckFunction()
+		policyUpdateIntervalFunc := backtestconfig.IntervalDaily.CheckFunction()
+
+		bt, err := backtest.Run(context.Background(), time.Time{}, time.Time{}, assets, alg, windowFunc, rebalanceIntervalFunc, policyUpdateIntervalFunc)
+		assert.NoError(t, err)
+		assert.Equal(t, date("2021-01-04"), bt.ReturnsTable.LastTime())
+		assert.Equal(t, date("2021-01-01"), bt.ReturnsTable.FirstTime())
+	})
 	t.Run("start date does not have a return", func(t *testing.T) {
 		rs := returns.NewTable([]returns.List{
 			{{Time: date("2020-01-03")}, {Time: date("2020-01-02")}, {Time: date("2020-01-01")}},

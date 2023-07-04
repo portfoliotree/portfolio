@@ -31,6 +31,13 @@ func Run(ctx context.Context, end, start time.Time, assetReturns returns.Table,
 		return Result{}, errors.New("no asset returns provided")
 	}
 
+	if start.IsZero() {
+		start = assetReturns.FirstTime()
+	}
+	if end.IsZero() {
+		end = assetReturns.LastTime()
+	}
+
 	if end.After(assetReturns.LastTime()) ||
 		start.Before(assetReturns.FirstTime()) {
 		return Result{}, ErrorNotEnoughData{}
