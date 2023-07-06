@@ -66,6 +66,8 @@ func Run(ctx context.Context, end, start time.Time, assetReturns returns.Table,
 		next    time.Time
 		hasNext = true
 
+		currentWeightsPolicyWeightsInput = make([]float64, assetReturns.NumberOfColumns())
+
 		result = Result{
 			Weights:            make([][]float64, 0, assetReturns.NumberOfRows()),
 			RebalanceTimes:     make([]time.Time, 0, assetReturns.NumberOfRows()),
@@ -87,7 +89,8 @@ func Run(ctx context.Context, end, start time.Time, assetReturns returns.Table,
 		assetReturnValuesToday = historicReturns.MostRecentValues()
 
 		if shouldCalculatePolicy(today, updatedDailyWeights) && start != today {
-			pw, err := alg.PolicyWeights(ctx, today, historicReturns, updatedWeights)
+			copy(currentWeightsPolicyWeightsInput, updatedWeights)
+			pw, err := alg.PolicyWeights(ctx, today, historicReturns, currentWeightsPolicyWeightsInput)
 			if err != nil {
 				return Result{}, err
 			}
