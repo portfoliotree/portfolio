@@ -16,19 +16,18 @@ func (p PolicyWeightCalculatorFunc) PolicyWeights(ctx context.Context, today tim
 
 type ConstantWeights []float64
 
-func (targetWeights ConstantWeights) PolicyWeights(_ context.Context, _ time.Time, _ returns.Table, _ []float64) ([]float64, error) {
-	return targetWeights, nil
+func (targetWeights ConstantWeights) PolicyWeights(_ context.Context, _ time.Time, _ returns.Table, ws []float64) ([]float64, error) {
+	copy(ws, targetWeights)
+	return ws, nil
 }
 
 type EqualWeights struct{}
 
-func (EqualWeights) PolicyWeights(_ context.Context, _ time.Time, assets returns.Table, _ []float64) ([]float64, error) {
-	n := float64(assets.NumberOfColumns())
-	targetWeights := make([]float64, assets.NumberOfColumns())
-	for i := range targetWeights {
-		targetWeights[i] = 1 / n
+func (EqualWeights) PolicyWeights(_ context.Context, _ time.Time, _ returns.Table, ws []float64) ([]float64, error) {
+	for i := range ws {
+		ws[i] = 1.0 / float64(len(ws))
 	}
-	return targetWeights, nil
+	return ws, nil
 }
 
 // Additional weight functions are maintained in portfoliotree.com proprietary code.
