@@ -36,6 +36,9 @@ func CorrelationMatrix(values [][]float64) *mat.Dense {
 }
 
 func DenseToSlices(dense *mat.Dense) [][]float64 {
+	if dense == nil {
+		return nil
+	}
 	iL, jL := dense.Dims()
 	result := make([][]float64, iL)
 	d := dense.RawMatrix().Data
