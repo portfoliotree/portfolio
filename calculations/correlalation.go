@@ -34,3 +34,13 @@ func CorrelationMatrix(values [][]float64) *mat.Dense {
 	}
 	return m
 }
+
+func DenseToSlices(dense *mat.Dense) [][]float64 {
+	iL, jL := dense.Dims()
+	result := make([][]float64, iL)
+	d := dense.RawMatrix().Data
+	for i := range result {
+		result[i] = d[i*jL : (i+1)*jL]
+	}
+	return result
+}

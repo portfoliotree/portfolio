@@ -260,17 +260,7 @@ func (table Table) CorrelationMatrix() *mat.Dense {
 }
 
 func (table Table) CorrelationMatrixValues() [][]float64 {
-	dense := table.CorrelationMatrix()
-	if dense == nil {
-		return nil
-	}
-	iL, jL := dense.Dims()
-	result := make([][]float64, iL)
-	d := dense.RawMatrix().Data
-	for i := range result {
-		result[i] = d[i*jL : (i+1)*jL]
-	}
-	return result
+	return calculations.DenseToSlices(table.CorrelationMatrix())
 }
 
 func (table Table) ExpectedRisk(weights []float64) float64 {
