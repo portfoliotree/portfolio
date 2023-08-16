@@ -147,7 +147,7 @@ func (table Table) AddColumn(list List) Table {
 
 func (table Table) Equal(other Table) bool {
 	return slices.EqualFunc(table.times, other.times, time.Time.Equal) &&
-		slices.EqualFunc(table.values, other.values, slices.Equal[float64])
+		slices.EqualFunc[[]float64](table.values, other.values, slices.Equal[float64])
 }
 
 func (table Table) AddColumns(lists []List) Table {
