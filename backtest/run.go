@@ -4,9 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"time"
-
-	"golang.org/x/exp/slices"
 
 	"github.com/portfoliotree/portfolio/returns"
 )
