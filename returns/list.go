@@ -91,14 +91,6 @@ func (list List) EndAndStartDate() (end, start time.Time, _ error) {
 	return list.LastTime(), list.FirstTime(), nil
 }
 
-func (list List) Reverse() {
-	for i := 0; i < len(list)/2; i++ {
-		r := list[i]
-		list[i] = list[len(list)-1-i]
-		list[len(list)-1-i] = r
-	}
-}
-
 // Risk calls calculations.RiskFromStdDev
 func (list List) Risk() float64 {
 	return calculations.RiskFromStdDev(list.Values())

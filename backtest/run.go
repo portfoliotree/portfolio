@@ -30,16 +30,9 @@ func Run(ctx context.Context, end, start time.Time, assetReturns returns.Table,
 		return Result{}, errors.New("no asset returns provided")
 	}
 
-	if start.IsZero() {
-		start = assetReturns.FirstTime()
-	}
-	if end.IsZero() {
-		end = assetReturns.LastTime()
-	}
-
-	if end.After(assetReturns.LastTime()) ||
-		start.Before(assetReturns.FirstTime()) {
-		return Result{}, ErrorNotEnoughData{}
+	end, start, err := ensureDatesAreWithinAssetTableRange(end, start, assetReturns)
+	if err != nil {
+		return Result{}, err
 	}
 
 	firstPolicyDate, policyWeights, err := fetchPolicy(ctx, end, start, alg, assetReturns, lookBackWindow)
@@ -138,13 +131,13 @@ func Run(ctx context.Context, end, start time.Time, assetReturns returns.Table,
 		copy(updatedDailyWeights, policyWeights)
 	}
 
-	dailyRebalancedReturns.Reverse()
-	backTestReturns.Reverse()
-	reverseInPlace(result.Weights)
+	slices.Reverse(dailyRebalancedReturns)
+	slices.Reverse(backTestReturns)
+	slices.Reverse(result.Weights)
 	result.Weights = slices.Clip(result.Weights)
-	reverseInPlace(result.RebalanceTimes)
+	slices.Reverse(result.RebalanceTimes)
 	result.RebalanceTimes = slices.Clip(result.RebalanceTimes)
-	reverseInPlace(result.PolicyUpdateTimes)
+	slices.Reverse(result.PolicyUpdateTimes)
 	result.PolicyUpdateTimes = slices.Clip(result.PolicyUpdateTimes)
 	result.ReturnsTable = returns.NewTable([]returns.List{
 		backTestReturns,
@@ -154,10 +147,17 @@ func Run(ctx context.Context, end, start time.Time, assetReturns returns.Table,
 	return result, nil
 }
 
-func reverseInPlace[E any](s []E) {
-	for i, j := 0, len(s)-1; i < j; i, j = i+1, j-1 {
-		s[i], s[j] = s[j], s[i]
+func ensureDatesAreWithinAssetTableRange(end, start time.Time, assetReturns returns.Table) (time.Time, time.Time, error) {
+	if start.IsZero() {
+		start = assetReturns.FirstTime()
 	}
+	if end.IsZero() {
+		end = assetReturns.LastTime()
+	}
+	if end.After(assetReturns.LastTime()) || start.Before(assetReturns.FirstTime()) {
+		return time.Time{}, time.Time{}, ErrorNotEnoughData{}
+	}
+	return end, start, nil
 }
 
 func fetchPolicy(ctx context.Context, end, start time.Time, alg PolicyWeightCalculator, assetReturns returns.Table, window WindowFunc) (time.Time, []float64, error) {
