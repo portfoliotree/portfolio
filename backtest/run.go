@@ -7,6 +7,8 @@ import (
 	"slices"
 	"time"
 
+	"gonum.org/v1/gonum/floats"
+
 	"github.com/portfoliotree/portfolio/returns"
 )
 
@@ -19,7 +21,7 @@ type (
 )
 
 // Run runs a portfolio back-test. It calls function parameters for policy updates and to check
-// when a policy update or rebalancing is required. Generally you should call Run or RunWithFullData.
+// when a policy update or rebalancing is required.
 func Run(ctx context.Context, end, start time.Time, assetReturns returns.Table,
 	alg PolicyWeightCalculator,
 	lookBackWindow WindowFunc,
@@ -39,19 +41,17 @@ func Run(ctx context.Context, end, start time.Time, assetReturns returns.Table,
 	if err != nil {
 		return Result{}, err
 	}
+
 	start = firstPolicyDate
 
-	updatedWeights := make([]float64, assetReturns.NumberOfColumns())
-	copy(updatedWeights, policyWeights)
-
-	updatedDailyWeights := make([]float64, assetReturns.NumberOfColumns())
-	copy(updatedDailyWeights, policyWeights)
-
 	var (
+		updatedWeights      = slices.Clone(policyWeights)
+		updatedDailyWeights = slices.Clone(policyWeights)
+
+		backTestReturns,
 		dailyRebalancedReturns returns.List
 		historicReturns        returns.Table
-		assetReturnValuesToday []float64
-		backTestReturns        returns.List
+		assetReturnValuesToday = make([]float64, assetReturns.NumberOfColumns())
 
 		rebalanceCount, recalculatePolicyCount = 0, 0
 
@@ -68,17 +68,13 @@ func Run(ctx context.Context, end, start time.Time, assetReturns returns.Table,
 		}
 	)
 
-	for today := start; hasNext; today = next {
+	for today, i := start, 0; hasNext && !today.After(end) && i < assetReturns.NumberOfRows(); today, i = next, i+1 {
 		next, hasNext = assetReturns.TimeAfter(today)
 		scaleToUnitRange(updatedWeights)
 		scaleToUnitRange(updatedDailyWeights)
 
-		if today.After(end) {
-			break
-		}
-
 		historicReturns = lookBackWindow(today, assetReturns)
-		assetReturnValuesToday = historicReturns.MostRecentValues()
+		assetReturnValuesToday = mostRecentValues(assetReturnValuesToday, historicReturns)
 
 		if shouldCalculatePolicy(today, updatedDailyWeights) && start != today {
 			copy(currentWeightsPolicyWeightsInput, updatedWeights)
@@ -95,25 +91,17 @@ func Run(ctx context.Context, end, start time.Time, assetReturns returns.Table,
 			copy(result.FinalPolicyWeights, policyWeights)
 		}
 
-		ret := returns.Return{
-			Time: today,
-		}
-		for j := 0; j < assetReturns.NumberOfColumns(); j++ {
-			ret.Value += updatedWeights[j] * assetReturnValuesToday[j]
-		}
-		backTestReturns = append(backTestReturns, ret)
-
-		dailyRebalancedRet := returns.Return{
-			Time: today,
-		}
-		for j := 0; j < assetReturns.NumberOfColumns(); j++ {
-			dailyRebalancedRet.Value += updatedDailyWeights[j] * assetReturnValuesToday[j]
-		}
-		dailyRebalancedReturns = append(dailyRebalancedReturns, dailyRebalancedRet)
+		backTestReturns = append(backTestReturns, returns.Return{
+			Time:  today,
+			Value: floats.Dot(updatedWeights, assetReturnValuesToday),
+		})
+		dailyRebalancedReturns = append(dailyRebalancedReturns, returns.Return{
+			Time:  today,
+			Value: floats.Dot(updatedDailyWeights, assetReturnValuesToday),
+		})
 
 		// calculate drift
-		lnp := historicReturns.NumberOfRows()
-		for j := 0; lnp > 0 && j < assetReturns.NumberOfColumns(); j++ {
+		for j := 0; historicReturns.NumberOfRows() > 0 && j < assetReturns.NumberOfColumns(); j++ {
 			updatedWeights[j] *= 1 + assetReturnValuesToday[j]      // drift
 			updatedDailyWeights[j] *= 1 + assetReturnValuesToday[j] // drift
 		}
@@ -124,15 +112,13 @@ func Run(ctx context.Context, end, start time.Time, assetReturns returns.Table,
 			result.RebalanceTimes = append(result.RebalanceTimes, today)
 		}
 
-		weightsToday := make([]float64, len(updatedWeights))
-		copy(weightsToday, updatedWeights)
-		result.Weights = append(result.Weights, weightsToday)
+		result.Weights = append(result.Weights, slices.Clone(updatedWeights))
 
 		copy(updatedDailyWeights, policyWeights)
 	}
 
-	slices.Reverse(dailyRebalancedReturns)
 	slices.Reverse(backTestReturns)
+	slices.Reverse(dailyRebalancedReturns)
 	slices.Reverse(result.Weights)
 	result.Weights = slices.Clip(result.Weights)
 	slices.Reverse(result.RebalanceTimes)
@@ -145,6 +131,14 @@ func Run(ctx context.Context, end, start time.Time, assetReturns returns.Table,
 	})
 
 	return result, nil
+}
+
+func mostRecentValues(mostRecentValues []float64, table returns.Table) []float64 {
+	values := table.ColumnValues()
+	for i := range values {
+		mostRecentValues[i] = values[i][0]
+	}
+	return mostRecentValues
 }
 
 func ensureDatesAreWithinAssetTableRange(end, start time.Time, assetReturns returns.Table) (time.Time, time.Time, error) {

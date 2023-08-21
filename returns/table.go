@@ -455,14 +455,6 @@ func (table Table) ColumnGroupValues(group ColumnGroup) [][]float64 {
 	return table.values[group.index : group.index+group.length : group.index+group.length]
 }
 
-func (table Table) MostRecentValues() []float64 {
-	result := make([]float64, len(table.values))
-	for i, column := range table.values {
-		result[i] = column[0]
-	}
-	return result
-}
-
 // AlignTables may be used to ensure multiple tables are date-aligned.
 func AlignTables(tables ...Table) (_ []Table, end, start time.Time, _ error) {
 	var (
