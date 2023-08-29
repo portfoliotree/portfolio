@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"io"
 	"net/url"
-	"slices"
 	"strconv"
 	"strings"
 	"time"
 
+	"golang.org/x/exp/slices"
 	"gopkg.in/yaml.v3"
 
 	"github.com/portfoliotree/portfolio/backtest"

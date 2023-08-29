@@ -6,12 +6,12 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"slices"
 	"sort"
 	"strconv"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"golang.org/x/exp/slices"
 	"gonum.org/v1/gonum/mat"
 
 	"github.com/portfoliotree/round"

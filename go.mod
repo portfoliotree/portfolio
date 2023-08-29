@@ -1,6 +1,6 @@
 module github.com/portfoliotree/portfolio
 
-go 1.21
+go 1.20
 
 require (
 	github.com/portfoliotree/round v0.0.0-20230629094931-8afd986aa2f1
