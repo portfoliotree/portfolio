@@ -1,8 +1,9 @@
 ---
 type: Portfolio
-spec:
+metadata:
   name: 60/40
   benchmark: BIGPX
+spec:
   assets: [ACWI, AGG]
   policy:
     weights: [60, 40]

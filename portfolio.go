@@ -2,11 +2,8 @@ package portfolio
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io"
-	"net/url"
-	"strconv"
 	"strings"
 	"time"
 
@@ -18,68 +15,67 @@ import (
 	"github.com/portfoliotree/portfolio/returns"
 )
 
-// Specification models a portfolio.
-type Specification struct {
-	Name      string      `yaml:"name"`
-	Benchmark Component   `yaml:"benchmark"`
-	Assets    []Component `yaml:"assets"`
-	Policy    Policy      `yaml:"policy"`
+type Document struct {
+	Type     string        `yaml:"type"`
+	Metadata Metadata      `yaml:"metadata"`
+	Spec     Specification `yaml:"spec"`
 
 	Filepath  string `yaml:"-"`
 	FileIndex int    `yaml:"-"`
 }
 
-// typedSpecificationFile may be exported some day.
-// For now, it provides a bit of indirection for specs and files.
-type typedSpecificationFile[S interface {
-	Specification
-}] struct {
-	ID   string `yaml:"id"`
-	Type string `yaml:"type"`
-	Spec S      `yaml:"spec"`
+type Metadata struct {
+	Name      string    `yaml:"name"`
+	Benchmark Component `yaml:"benchmark"`
 }
 
-// ParseOneSpecification decodes the contents of in to a Specification
+// Specification models a portfolio.
+type Specification struct {
+	Assets []Component `yaml:"assets"`
+	Policy Policy      `yaml:"policy"`
+}
+
+// ParseOneDocument decodes the contents of in to a Specification
 // It supports a string containing YAML.
 // The resulting Specification may have default values for unset fields.
-func ParseOneSpecification(in string) (Specification, error) {
-	result, err := ParseSpecifications(strings.NewReader(in))
+func ParseOneDocument(in string) (Document, error) {
+	result, err := ParseDocuments(strings.NewReader(in))
 	if err != nil {
-		return Specification{}, err
+		return Document{}, err
 	}
 	if len(result) != 1 {
-		return Specification{}, fmt.Errorf("expected input to have exactly one portfolio especified")
+		return Document{}, fmt.Errorf("expected input to have exactly one portfolio especified")
 	}
 	return result[0], nil
 }
 
 const portfolioTypeName = "Portfolio"
 
-// ParseSpecifications decodes the contents of in to a list of Specifications
+// ParseDocuments decodes the contents of in to a list of Specifications
 // The resulting Specification may have default values for unset fields.
-func ParseSpecifications(r io.Reader) ([]Specification, error) {
+func ParseDocuments(r io.Reader) ([]Document, error) {
 	dec := yaml.NewDecoder(r)
 	dec.KnownFields(true)
-	var result []Specification
-	for {
-		var spec typedSpecificationFile[Specification]
-		if err := dec.Decode(&spec); err != nil {
+	var result []Document
+	for index := 0; ; index++ {
+		var document Document
+		if err := dec.Decode(&document); err != nil {
 			if err == io.EOF {
 				return result, nil
 			}
 			return result, err
 		}
-		switch spec.Type {
+		switch document.Type {
 		case portfolioTypeName:
 		default:
-			return result, fmt.Errorf("incorrect specification type got %q but expected %q", spec.Type, portfolioTypeName)
+			return result, fmt.Errorf("incorrect specification type got %q but expected %q", document.Type, portfolioTypeName)
 		}
-		pf := spec.Spec
-		pf.setDefaultPolicyWeightAlgorithm()
-		if err := pf.ensureEqualNumberOfWeightsAndAssets(); err != nil {
+		document.Spec.setDefaultPolicyWeightAlgorithm()
+		if err := document.Spec.ensureEqualNumberOfWeightsAndAssets(); err != nil {
 			return result, err
 		}
-		result = append(result, pf)
+		document.FileIndex = index
+		result = append(result, document)
 	}
 }
 
@@ -159,107 +155,4 @@ type Policy struct {
 	WeightsAlgorithm         string                  `yaml:"weights_algorithm,omitempty"`
 	WeightsAlgorithmLookBack backtestconfig.Window   `yaml:"weights_algorithm_look_back_window,omitempty"`
 	WeightsUpdatingInterval  backtestconfig.Interval `yaml:"weights_updating_interval,omitempty"`
-}
-
-func (pf *Specification) ParseValues(q url.Values) error {
-	if q.Has("asset-id") {
-		pf.Assets = pf.Assets[:0]
-		for _, assetID := range q["asset-id"] {
-			pf.Assets = append(pf.Assets, Component{ID: assetID})
-		}
-	}
-	if q.Has("benchmark-id") {
-		pf.Benchmark.ID = q.Get("benchmark-id")
-	}
-	if q.Has("name") {
-		pf.Name = q.Get("name")
-	}
-	if q.Has("filepath") {
-		pf.Filepath = q.Get("filepath")
-	}
-	if q.Has("policy-rebalance") {
-		pf.Policy.RebalancingInterval = backtestconfig.Interval(q.Get("policy-rebalance"))
-	}
-	if q.Has("policy-weights-algorithm") {
-		pf.Policy.WeightsAlgorithm = q.Get("policy-weights-algorithm")
-	}
-	if q.Has("policy-weight") {
-		pf.Policy.Weights = pf.Policy.Weights[:0]
-		for i, weight := range q["policy-weight"] {
-			f, err := strconv.ParseFloat(weight, 64)
-			if err != nil {
-				return fmt.Errorf("failed to parse policy weight at indx %d: %w", i, err)
-			}
-			pf.Policy.Weights = append(pf.Policy.Weights, f)
-		}
-	}
-	if q.Has("policy-update-weights") {
-		pf.Policy.WeightsUpdatingInterval = backtestconfig.Interval(q.Get("policy-update-weights"))
-	}
-	if q.Has("policy-weight-algorithm-look-back") {
-		pf.Policy.WeightsAlgorithmLookBack = backtestconfig.Window(q.Get("policy-weight-algorithm-look-back"))
-	}
-	pf.filterEmptyAssetIDs()
-	return pf.Validate()
-}
-
-func (pf *Specification) Values() url.Values {
-	q := make(url.Values)
-	if pf.Name != "" {
-		q.Set("name", pf.Name)
-	}
-	if pf.Benchmark.ID != "" {
-		q.Set("benchmark-id", pf.Benchmark.ID)
-	}
-	if pf.Filepath != "" {
-		q.Set("filepath", pf.Filepath)
-	}
-	if pf.Assets != nil {
-		for _, asset := range pf.Assets {
-			q.Add("asset-id", asset.ID)
-		}
-	}
-	if pf.Policy.RebalancingInterval != "" {
-		q.Set("policy-rebalance", pf.Policy.RebalancingInterval.String())
-	}
-	if pf.Policy.WeightsAlgorithm != "" {
-		q.Set("policy-weights-algorithm", pf.Policy.WeightsAlgorithm)
-	}
-	if pf.Policy.Weights != nil {
-		for _, w := range pf.Policy.Weights {
-			q.Add("policy-weight", strconv.FormatFloat(w, 'f', 4, 64))
-		}
-	}
-	if pf.Policy.WeightsUpdatingInterval != "" {
-		q.Set("policy-update-weights", string(pf.Policy.WeightsUpdatingInterval))
-	}
-	if pf.Policy.WeightsAlgorithmLookBack != "" {
-		q.Set("policy-weight-algorithm-look-back", pf.Policy.WeightsAlgorithmLookBack.String())
-	}
-	return q
-}
-
-// Validate does some simple validations.
-// Server you should do additional validations.
-func (pf *Specification) Validate() error {
-	var list []error
-	for _, asset := range pf.Assets {
-		list = append(list, asset.Validate())
-	}
-	if pf.Benchmark.ID != "" {
-		if err := pf.Benchmark.Validate(); err != nil {
-			list = append(list, err)
-		}
-	}
-	return errors.Join(list...)
-}
-
-func (pf *Specification) filterEmptyAssetIDs() {
-	filtered := pf.Assets[:0]
-	for _, asset := range pf.Assets {
-		if asset.ID != "" {
-			filtered = append(filtered, asset)
-		}
-	}
-	pf.Assets = filtered
 }

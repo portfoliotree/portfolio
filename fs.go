@@ -4,14 +4,13 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 )
 
-// ParseSpecificationFile opens a file and parses the contents into a Specification
+// ParseDocumentFile opens a file and parses the contents into a Document
 // It supports YAML files at the moment but may support other encodings in the future.
-func ParseSpecificationFile(specificationFilePath string) ([]Specification, error) {
+func ParseDocumentFile(specificationFilePath string) ([]Document, error) {
 	if err := checkPortfolioFileName(specificationFilePath); err != nil {
 		return nil, err
 	}
@@ -33,43 +32,14 @@ func checkPortfolioFileName(fileName string) error {
 	}
 }
 
-func portfoliosFromFile(fileName string, file fs.File) ([]Specification, error) {
-	result, err := ParseSpecifications(file)
+func portfoliosFromFile(fileName string, file fs.File) ([]Document, error) {
+	result, err := ParseDocuments(file)
 	if err != nil {
 		return result, err
 	}
+	p := filepath.ToSlash(fileName)
 	for i := range result {
-		result[i].Filepath = filepath.ToSlash(fileName)
-		result[i].FileIndex = i
+		result[i].Filepath = p
 	}
 	return result, nil
-}
-
-func WalkDirectoryAndParseSpecificationFiles(dir fs.FS) ([]Specification, error) {
-	var result []Specification
-	return result, fs.WalkDir(dir, ".", func(filePath string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-		if d.IsDir() {
-			if filePath != "." && strings.HasPrefix(path.Base(filePath), ".") {
-				return fs.SkipDir
-			}
-			return nil
-		}
-		if err := checkPortfolioFileName(filePath); err != nil {
-			return nil
-		}
-		f, err := dir.Open(filePath)
-		if err != nil {
-			return err
-		}
-		defer closeAndIgnoreErrors(f)
-		specs, err := portfoliosFromFile(filePath, f)
-		if err != nil {
-			return err
-		}
-		result = append(result, specs...)
-		return nil
-	})
 }

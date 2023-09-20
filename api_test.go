@@ -32,7 +32,7 @@ func TestSpecification_AssetReturns(t *testing.T) {
 		},
 	} {
 		t.Run(tt.Name, func(t *testing.T) {
-			_, err := tt.pf.AssetReturns(tt.ctx)
+			_, err := portfolio.AssetReturnsTable(tt.ctx, tt.pf.Assets)
 			if tt.ErrorStringContains == "" {
 				assert.NoError(t, err)
 			} else {
@@ -45,6 +45,6 @@ func TestSpecification_AssetReturns(t *testing.T) {
 func Test_Specification_AssetReturns_bad_URL(t *testing.T) {
 	t.Setenv(portfolio.ServerURLEnvironmentVariableName, ":lemon:")
 	pf := portfolio.Specification{Assets: []portfolio.Component{{ID: "AAPL"}}}
-	_, err := pf.AssetReturns(context.Background())
+	_, err := portfolio.AssetReturnsTable(context.Background(), pf.Assets)
 	assert.ErrorContains(t, err, "lemon")
 }

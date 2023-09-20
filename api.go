@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"strings"
 
 	"github.com/portfoliotree/portfolio/returns"
 )
@@ -34,8 +33,8 @@ const (
 	ReturnsURLPath = "/api/returns"
 )
 
-func (pf *Specification) AssetReturns(ctx context.Context) (returns.Table, error) {
-	if len(pf.Assets) == 0 {
+func AssetReturnsTable(ctx context.Context, assets []Component) (returns.Table, error) {
+	if len(assets) == 0 {
 		return returns.Table{}, nil
 	}
 	u, err := url.Parse(portfolioTreeURL())
@@ -44,7 +43,7 @@ func (pf *Specification) AssetReturns(ctx context.Context) (returns.Table, error
 	}
 	u.Path = ReturnsURLPath
 	q := u.Query()
-	for _, c := range pf.Assets {
+	for _, c := range assets {
 		c.marshalURLValues(q, "asset")
 	}
 	u.RawQuery = q.Encode()
@@ -68,13 +67,12 @@ func doJSONRequest[T any](do func(r *http.Request) (*http.Response, error), req 
 	switch res.StatusCode {
 	case http.StatusOK, http.StatusCreated:
 	default:
-		var message string
-		if strings.HasPrefix(res.Header.Get("content-type"), "text/plain") {
-			b, _ := io.ReadAll(res.Body)
-			message = string(b)
-		} else {
-			message = fmt.Sprintf("request failed %s", res.Status)
-		}
+		message := fmt.Sprintf("request failed %s", res.Status)
+		//contentType, _, _ := mime.ParseMediaType(res.Header.Get("content-type"))
+		//if contentType == "text/plain" {
+		//	b, _ := io.ReadAll(res.Body)
+		//	message = string(b)
+		//}
 		return result, errors.New(message)
 	}
 	// TODO: do response header validation

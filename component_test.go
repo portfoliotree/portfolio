@@ -33,6 +33,12 @@ func TestComponent_Validate(t *testing.T) {
 			},
 			ErrorSubstring: "pattern",
 		},
+		{
+			Name: "valid security symbol",
+			Component: Component{
+				ID: "SPY",
+			},
+		},
 	} {
 		t.Run(tt.Name, func(t *testing.T) {
 			err := tt.Component.Validate()
