@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"golang.org/x/exp/slices"
 	"gopkg.in/yaml.v3"
 
@@ -16,23 +17,23 @@ import (
 )
 
 type Document struct {
-	Type     string        `yaml:"type"`
-	Metadata Metadata      `yaml:"metadata"`
-	Spec     Specification `yaml:"spec"`
-
-	Filepath  string `yaml:"-"`
-	FileIndex int    `yaml:"-"`
+	ID       primitive.ObjectID `json:"_id"      yaml:"_id"      bson:"_id"`
+	Type     string             `json:"type"     yaml:"type"     bson:"type"`
+	Metadata Metadata           `json:"metadata" yaml:"metadata" bson:"metadata"`
+	Spec     Specification      `json:"spec"     yaml:"spec"     bson:"spec"`
 }
 
 type Metadata struct {
-	Name      string    `yaml:"name"`
-	Benchmark Component `yaml:"benchmark"`
+	Name        string    `json:"name,omitempty"        yaml:"name,omitempty"        bson:"name,omitempty"`
+	Benchmark   Component `json:"benchmark,omitempty"   yaml:"benchmark,omitempty"   bson:"benchmark,omitempty"`
+	Description string    `json:"description,omitempty" yaml:"description,omitempty" bson:"description,omitempty"`
+	Privacy     string    `json:"privacy,omitempty"     yaml:"privacy,omitempty"     bson:"privacy,omitempty"`
 }
 
 // Specification models a portfolio.
 type Specification struct {
-	Assets []Component `yaml:"assets"`
-	Policy Policy      `yaml:"policy"`
+	Assets []Component `json:"assets" yaml:"assets" bson:"assets"`
+	Policy Policy      `json:"policy" yaml:"policy" bson:"policy"`
 }
 
 // ParseOneDocument decodes the contents of in to a Specification
@@ -74,7 +75,6 @@ func ParseDocuments(r io.Reader) ([]Document, error) {
 		if err := document.Spec.ensureEqualNumberOfWeightsAndAssets(); err != nil {
 			return result, err
 		}
-		document.FileIndex = index
 		result = append(result, document)
 	}
 }
@@ -149,10 +149,9 @@ func (pf *Specification) BacktestWithStartAndEndTime(ctx context.Context, start,
 }
 
 type Policy struct {
-	RebalancingInterval backtestconfig.Interval `yaml:"rebalancing_interval,omitempty"`
-
-	Weights                  []float64               `yaml:"weights,omitempty"`
-	WeightsAlgorithm         string                  `yaml:"weights_algorithm,omitempty"`
-	WeightsAlgorithmLookBack backtestconfig.Window   `yaml:"weights_algorithm_look_back_window,omitempty"`
-	WeightsUpdatingInterval  backtestconfig.Interval `yaml:"weights_updating_interval,omitempty"`
+	RebalancingInterval      backtestconfig.Interval `json:"rebalancing_interval,omitempty"               yaml:"rebalancing_interval,omitempty"               bson:"rebalancing_interval"`
+	Weights                  []float64               `json:"weights,omitempty"                            yaml:"weights,omitempty"                            bson:"weights"`
+	WeightsAlgorithm         string                  `json:"weights_algorithm,omitempty"                  yaml:"weights_algorithm,omitempty"                  bson:"weights_algorithm"`
+	WeightsAlgorithmLookBack backtestconfig.Window   `json:"weights_algorithm_look_back_window,omitempty" yaml:"weights_algorithm_look_back_window,omitempty" bson:"weights_algorithm_look_back_window"`
+	WeightsUpdatingInterval  backtestconfig.Interval `json:"weights_updating_interval,omitempty"          yaml:"weights_updating_interval,omitempty"          bson:"weights_updating_interval"`
 }

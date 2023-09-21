@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
-	"path/filepath"
 	"strings"
 )
 
@@ -37,9 +36,6 @@ func portfoliosFromFile(fileName string, file fs.File) ([]Document, error) {
 	if err != nil {
 		return result, err
 	}
-	p := filepath.ToSlash(fileName)
-	for i := range result {
-		result[i].Filepath = p
-	}
+	// p := filepath.ToSlash(fileName)
 	return result, nil
 }
