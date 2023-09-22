@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
 	"path/filepath"
 	"testing"
@@ -31,18 +32,13 @@ func TestMain(m *testing.M) {
 
 func testdataAssetReturns(crp portfolio.ComponentReturnsProvider) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
-		var assetIDs []portfolio.Component
-		if err := req.ParseForm(); err != nil {
-			panic(err)
+		var pf portfolio.Specification
+		if err := pf.ParseValues(req.URL.Query()); err != nil {
+			http.Error(res, err.Error(), http.StatusInternalServerError)
+			return
 		}
-		for _, assetID := range req.Form["asset-id"] {
-			assetIDs = append(assetIDs, portfolio.Component{
-				ID: assetID,
-			})
-		}
-		table, err := crp.ComponentReturnsTable(req.Context(), assetIDs...)
+		table, err := crp.ComponentReturnsTable(req.Context(), pf.Assets...)
 		if err != nil {
-			res.Header().Set("content-type", "text/html")
 			http.Error(res, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -65,10 +61,9 @@ func ExampleParse() {
 	const specYAML = `
 ---
 type: Portfolio
-metadata:
+spec:
   name: 60/40
   benchmark: BIGPX
-spec:
   assets: [ACWI, AGG]
   policy:
     weights: [60, 40]
@@ -76,12 +71,12 @@ spec:
     rebalancing_interval: Quarterly
 `
 
-	pf, err := portfolio.ParseOneDocument(specYAML)
+	pf, err := portfolio.ParseOneSpecification(specYAML)
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println("Name:", pf.Metadata.Name)
-	fmt.Println("Alg:", pf.Spec.Policy.WeightsAlgorithm)
+	fmt.Println("Name:", pf.Name)
+	fmt.Println("Alg:", pf.Policy.WeightsAlgorithm)
 
 	// Output:
 	// Name: 60/40
@@ -89,13 +84,13 @@ spec:
 }
 
 func ExampleOpen() {
-	pfs, err := portfolio.ParseDocumentFile(filepath.Join("examples", "60-40_portfolio.yml"))
+	portfolios, err := portfolio.ParseSpecificationFile(filepath.Join("examples", "60-40_portfolio.yml"))
 	if err != nil {
 		panic(err)
 	}
-	pf := pfs[0]
-	fmt.Println("Name:", pf.Metadata.Name)
-	fmt.Println("Alg:", pf.Spec.Policy.WeightsAlgorithm)
+	pf := portfolios[0]
+	fmt.Println("Name:", pf.Name)
+	fmt.Println("Alg:", pf.Policy.WeightsAlgorithm)
 
 	// Output:
 	// Name: 60/40
@@ -107,7 +102,7 @@ func TestParse(t *testing.T) {
 		Name                string
 		SpecYAML            string
 		ErrorStringContains string
-		Document            portfolio.Document
+		Portfolio           portfolio.Specification
 	}{
 		{
 			Name:                "invalid yaml",
@@ -129,7 +124,7 @@ func TestParse(t *testing.T) {
 		{
 			Name: "component field is invalid",
 			// language=yaml
-			SpecYAML:            `{type: Portfolio, spec: {}, metadata: {benchmark: {id: []}}}`,
+			SpecYAML:            `{type: Portfolio, spec: {benchmark: {id: []}}}`,
 			ErrorStringContains: "yaml: unmarshal errors:",
 		},
 		{
@@ -150,19 +145,19 @@ func TestParse(t *testing.T) {
 		{
 			Name: "component kind is not correct",
 			// language=yaml
-			SpecYAML:            `{type: Portfolio, metadata: {benchmark: []}, spec: {}}`,
+			SpecYAML:            `{type: Portfolio, spec: {benchmark: []}}`,
 			ErrorStringContains: "wrong YAML type:",
 		},
 	} {
 		t.Run(tt.Name, func(t *testing.T) {
-			p, err := portfolio.ParseOneDocument(tt.SpecYAML)
+			p, err := portfolio.ParseOneSpecification(tt.SpecYAML)
 			if tt.ErrorStringContains == "" {
 				assert.NoError(t, err)
 			} else {
 				assert.Error(t, err)
 				assert.ErrorContains(t, err, tt.ErrorStringContains)
 			}
-			assert.Equal(t, tt.Document, p)
+			assert.Equal(t, tt.Portfolio, p)
 		})
 	}
 }
@@ -171,10 +166,9 @@ func ExampleSpecification_Backtest() {
 	// language=yaml
 	const portfolioSpecYAML = `---
 type: Portfolio
-metadata:
+spec:
   name: 60/40
   benchmark: BIGPX
-spec:
   assets: [ACWI, AGG]
   policy:
     weights: [60, 40]
@@ -182,17 +176,17 @@ spec:
     rebalancing_interval: Quarterly
 `
 
-	doc, err := portfolio.ParseOneDocument(portfolioSpecYAML)
+	pf, err := portfolio.ParseOneSpecification(portfolioSpecYAML)
 	if err != nil {
 		panic(err)
 	}
 
 	ctx := context.Background()
-	assets, err := portfolio.AssetReturnsTable(ctx, doc.Spec.Assets)
+	assets, err := pf.AssetReturns(ctx)
 	if err != nil {
 		panic(err)
 	}
-	result, err := doc.Spec.Backtest(ctx, assets, nil)
+	result, err := pf.Backtest(ctx, assets, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -266,6 +260,147 @@ func TestPortfolio_Backtest_custom_function(t *testing.T) {
 		return nil, fmt.Errorf("lemon")
 	})
 	assert.EqualError(t, err, "lemon")
+}
+
+func Test_Portfolio_Validate(t *testing.T) {
+	for _, tt := range []struct {
+		Name      string
+		Portfolio portfolio.Specification
+		ExpectErr bool
+	}{
+		{
+			Name: "okay", Portfolio: portfolio.Specification{}, ExpectErr: false,
+		},
+		{
+			Name: "bad asset",
+			Portfolio: portfolio.Specification{
+				Assets: []portfolio.Component{{ID: "_"}},
+			},
+			ExpectErr: true,
+		},
+		{
+			Name: "benchmark",
+			Portfolio: portfolio.Specification{
+				Benchmark: portfolio.Component{ID: "()"},
+			},
+			ExpectErr: true,
+		},
+	} {
+		t.Run(tt.Name, func(t *testing.T) {
+			err := tt.Portfolio.Validate()
+			if tt.ExpectErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func Test_Portfolio_ParseValues(t *testing.T) {
+	for _, tt := range []struct {
+		Name      string
+		Values    url.Values
+		In, Out   portfolio.Specification
+		ExpectErr bool
+	}{
+		{
+			Name: "set everything",
+			Values: url.Values{
+				"name":                              []string{"X"},
+				"asset-id":                          []string{"y", "z"},
+				"benchmark-id":                      []string{"b"},
+				"filepath":                          []string{"f"},
+				"policy-weight":                     []string{".5", ".5"},
+				"policy-rebalance":                  []string{"Daily"},
+				"policy-weights-algorithm":          []string{"Static"},
+				"policy-update-weights":             []string{"Daily"},
+				"policy-weight-algorithm-look-back": []string{"1 Week"},
+			},
+			Out: portfolio.Specification{
+				Name: "X",
+				Assets: []portfolio.Component{
+					{ID: "y"},
+					{ID: "z"},
+				},
+				Benchmark: portfolio.Component{
+					ID: "b",
+				},
+				Filepath: "f",
+				Policy: portfolio.Policy{
+					RebalancingInterval:      "Daily",
+					WeightsAlgorithm:         "Static",
+					Weights:                  []float64{0.5, 0.5},
+					WeightsUpdatingInterval:  "Daily",
+					WeightsAlgorithmLookBack: "1 Week",
+				},
+			},
+		},
+		{
+			Name:   "empty values do not override",
+			Values: url.Values{},
+			In: portfolio.Specification{
+				Name:      "no change",
+				Benchmark: portfolio.Component{ID: "b"},
+				Assets:    []portfolio.Component{{ID: "a1"}},
+				Filepath:  "f",
+			},
+			Out: portfolio.Specification{
+				Name:      "no change",
+				Benchmark: portfolio.Component{ID: "b"},
+				Assets:    []portfolio.Component{{ID: "a1"}},
+				Filepath:  "f",
+			},
+		},
+	} {
+		t.Run(tt.Name, func(t *testing.T) {
+			pf := &tt.In
+			err := pf.ParseValues(tt.Values)
+			if tt.ExpectErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+			assert.Equal(t, tt.Out, *pf)
+		})
+	}
+}
+
+func Test_Portfolio_Values(t *testing.T) {
+	t.Run("encode and decode", func(t *testing.T) {
+		pf := portfolio.Specification{
+			Name: "X",
+			Assets: []portfolio.Component{
+				{ID: "y"},
+				{ID: "z"},
+			},
+			Benchmark: portfolio.Component{
+				ID: "b",
+			},
+			Filepath: "f",
+			Policy: portfolio.Policy{
+				RebalancingInterval:      "Daily",
+				WeightsAlgorithm:         "Static",
+				Weights:                  []float64{0.5, 0.5},
+				WeightsUpdatingInterval:  "Daily",
+				WeightsAlgorithmLookBack: "1 Week",
+			},
+		}
+
+		var update portfolio.Specification
+		e := pf.Values().Encode()
+		q, err := url.ParseQuery(e)
+		require.NoError(t, err)
+		assert.NoError(t, update.ParseValues(q))
+		assert.Equal(t, pf, update)
+	})
+
+	t.Run("fail to parse float", func(t *testing.T) {
+		values, err := url.ParseQuery(`policy-weight=x`)
+		require.NoError(t, err)
+		var pf portfolio.Specification
+		assert.Error(t, pf.ParseValues(values))
+	})
 }
 
 func TestPortfolio_RemoveAsset(t *testing.T) {

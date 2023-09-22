@@ -21,57 +21,47 @@ func TestParseSpecificationFile(t *testing.T) {
 		Name                string
 		FilePath            string
 		ErrorStringContains string
-		Documents           []portfolio.Document
+		Portfolios          []portfolio.Specification
 	}{
 		{
 			Name:     "asset ids with policy weights",
 			FilePath: filepath.Join("examples", "60-40_portfolio.yml"),
-			Documents: []portfolio.Document{
+			Portfolios: []portfolio.Specification{
 				{
-					Type: "Portfolio",
-					Metadata: portfolio.Metadata{
-						Name:      "60/40",
-						Benchmark: portfolio.Component{ID: "BIGPX"},
+					Name:      "60/40",
+					Benchmark: portfolio.Component{ID: "BIGPX"},
+					Assets: []portfolio.Component{
+						{ID: "ACWI"},
+						{ID: "AGG"},
 					},
-					Spec: portfolio.Specification{
-						Assets: []portfolio.Component{
-							{ID: "ACWI"},
-							{ID: "AGG"},
-						},
-						Policy: portfolio.Policy{
-							Weights:             []float64{60, 40},
-							WeightsAlgorithm:    portfolio.PolicyAlgorithmConstantWeights,
-							RebalancingInterval: "Quarterly",
-						},
+					Policy: portfolio.Policy{
+						Weights:             []float64{60, 40},
+						WeightsAlgorithm:    portfolio.PolicyAlgorithmConstantWeights,
+						RebalancingInterval: "Quarterly",
 					},
-					// Filepath: "examples/60-40_portfolio.yml",
+					Filepath: "examples/60-40_portfolio.yml",
 				},
 			},
 		},
 		{
 			Name:     "mixed asset spec node type and weight algorithm",
 			FilePath: filepath.Join("examples", "maang_portfolio.yml"),
-			Documents: []portfolio.Document{
+			Portfolios: []portfolio.Specification{
 				{
-					Type: "Portfolio",
-					Metadata: portfolio.Metadata{
-						Name:      "MAANG",
-						Benchmark: portfolio.Component{ID: "SPY"},
+					Name:      "MAANG",
+					Benchmark: portfolio.Component{ID: "SPY"},
+					Assets: []portfolio.Component{
+						{ID: "META"},
+						{ID: "AMZN"},
+						{ID: "AAPL"},
+						{ID: "NFLX"},
+						{ID: "GOOG"},
 					},
-					Spec: portfolio.Specification{
-						Assets: []portfolio.Component{
-							{ID: "META"},
-							{ID: "AMZN"},
-							{ID: "AAPL"},
-							{ID: "NFLX"},
-							{ID: "GOOG"},
-						},
-						Policy: portfolio.Policy{
-							RebalancingInterval: "Quarterly",
-							WeightsAlgorithm:    portfolio.PolicyAlgorithmEqualWeights,
-						},
+					Policy: portfolio.Policy{
+						RebalancingInterval: "Quarterly",
+						WeightsAlgorithm:    portfolio.PolicyAlgorithmEqualWeights,
 					},
-					// Filepath: "examples/maang_portfolio.yml",
+					Filepath: "examples/maang_portfolio.yml",
 				},
 			},
 		},
@@ -92,14 +82,20 @@ func TestParseSpecificationFile(t *testing.T) {
 		},
 	} {
 		t.Run(tt.Name, func(t *testing.T) {
-			documents, err := portfolio.ParseDocumentFile(tt.FilePath)
+			portfolios, err := portfolio.ParseSpecificationFile(tt.FilePath)
 			if tt.ErrorStringContains == "" {
 				assert.NoError(t, err)
 			} else {
 				assert.Error(t, err)
 				assert.ErrorContains(t, err, tt.ErrorStringContains)
 			}
-			assert.Equal(t, tt.Documents, documents)
+			assert.Equal(t, tt.Portfolios, portfolios)
 		})
 	}
+}
+
+func TestLoadPortfolios(t *testing.T) {
+	specs, err := portfolio.WalkDirectoryAndParseSpecificationFiles(os.DirFS("examples"))
+	assert.NoError(t, err)
+	assert.Len(t, specs, 2)
 }
