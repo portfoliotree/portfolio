@@ -17,10 +17,10 @@ type Component struct {
 var componentExpression = regexp.MustCompile(`^[a-zA-Z0-9.:s]{1,24}$`)
 
 func (component Component) Validate() error {
-	switch component.ID {
-	case "":
+	if component.ID == "" {
 		return fmt.Errorf(`component ID must be set`)
-	case "undefined":
+	}
+	if component.ID == "undefined" {
 		return fmt.Errorf(`component ID must not be "undefined"`)
 	}
 	if !componentExpression.MatchString(component.ID) {

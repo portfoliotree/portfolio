@@ -1,14 +1,13 @@
 ---
 type: Portfolio
-metadata:
-  name: MAANG
-  benchmark: SPY
 spec:
+  name: MAANG
   assets:
-    - {id: META}
-    - AMZN
-    - AAPL
-    - NFLX
-    - GOOG
+  - {id: META}
+  - AMZN
+  - AAPL
+  - NFLX
+  - GOOG
   policy:
     rebalancing_interval: Quarterly
+  benchmark: SPY
