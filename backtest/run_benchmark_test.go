@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/portfoliotree/portfolio"
+	"github.com/portfoliotree/portfolio/allocation"
 	"github.com/portfoliotree/portfolio/backtest"
 	"github.com/portfoliotree/portfolio/backtest/backtestconfig"
 	"github.com/portfoliotree/portfolio/portfoliotest"
@@ -39,14 +40,14 @@ func benchmarkRun(b *testing.B, table returns.Table) {
 	b.Helper()
 	end := table.LastTime()
 	start := table.FirstTime()
-	fn := backtestconfig.EqualWeights{}
+	alg := new(allocation.EqualWeights)
 	lookback := backtestconfig.OneQuarterWindow.Function
 	rebalance := backtestconfig.Daily()
 	updatePolicyWeights := backtestconfig.Monthly()
 	ctx := context.Background()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, err := backtest.Run(ctx, end, start, table, fn, lookback, rebalance, updatePolicyWeights)
+		_, err := backtest.Run(ctx, end, start, table, alg, lookback, rebalance, updatePolicyWeights)
 		if err != nil {
 			b.Fatal(err)
 		}
