@@ -246,7 +246,7 @@ func TestPortfolio_Backtest(t *testing.T) {
 	} {
 		t.Run(tt.Name, func(t *testing.T) {
 			pf := tt.Portfolio
-			_, err := pf.Backtest(tt.ctx, returns.Table{}, nil)
+			_, err := pf.Backtest(tt.ctx, returns.NewTable([]returns.List{{}}), nil)
 			if tt.ErrorSubstring == "" {
 				assert.NoError(t, err)
 			} else {
