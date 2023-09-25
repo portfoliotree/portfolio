@@ -40,7 +40,7 @@ func TestParseSpecificationFile(t *testing.T) {
 						},
 						Policy: portfolio.Policy{
 							Weights:             []float64{60, 40},
-							WeightsAlgorithm:    portfolio.PolicyAlgorithmConstantWeights,
+							WeightsAlgorithm:    "Constant Weights",
 							RebalancingInterval: "Quarterly",
 						},
 					},
@@ -68,7 +68,7 @@ func TestParseSpecificationFile(t *testing.T) {
 						},
 						Policy: portfolio.Policy{
 							RebalancingInterval: "Quarterly",
-							WeightsAlgorithm:    portfolio.PolicyAlgorithmEqualWeights,
+							WeightsAlgorithm:    "Equal Weights",
 						},
 					},
 					// Filepath: "examples/maang_portfolio.yml",
