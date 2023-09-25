@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/portfoliotree/portfolio"
+	"github.com/portfoliotree/portfolio/allocation"
 )
 
 func TestParseSpecificationFile(t *testing.T) {
@@ -36,7 +37,7 @@ func TestParseSpecificationFile(t *testing.T) {
 					},
 					Policy: portfolio.Policy{
 						Weights:             []float64{60, 40},
-						WeightsAlgorithm:    portfolio.PolicyAlgorithmConstantWeights,
+						WeightsAlgorithm:    allocation.ConstantWeightsAlgorithmName,
 						RebalancingInterval: "Quarterly",
 					},
 					Filepath: "examples/60-40_portfolio.yml",
@@ -59,7 +60,7 @@ func TestParseSpecificationFile(t *testing.T) {
 					},
 					Policy: portfolio.Policy{
 						RebalancingInterval: "Quarterly",
-						WeightsAlgorithm:    portfolio.PolicyAlgorithmEqualWeights,
+						WeightsAlgorithm:    allocation.ConstantWeightsAlgorithmName,
 					},
 					Filepath: "examples/maang_portfolio.yml",
 				},
