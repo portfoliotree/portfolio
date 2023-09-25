@@ -13,6 +13,7 @@ import (
 	"golang.org/x/exp/slices"
 	"gopkg.in/yaml.v3"
 
+	"github.com/portfoliotree/portfolio/allocation"
 	"github.com/portfoliotree/portfolio/backtest"
 	"github.com/portfoliotree/portfolio/backtest/backtestconfig"
 	"github.com/portfoliotree/portfolio/returns"
@@ -74,11 +75,9 @@ func ParseSpecifications(r io.Reader) ([]Specification, error) {
 		default:
 			return result, fmt.Errorf("incorrect specification type got %q but expected %q", spec.Type, portfolioTypeName)
 		}
+
 		pf := spec.Spec
 		pf.setDefaultPolicyWeightAlgorithm()
-		if err := pf.ensureEqualNumberOfWeightsAndAssets(); err != nil {
-			return result, err
-		}
 		result = append(result, pf)
 	}
 }
@@ -91,61 +90,27 @@ func (pf *Specification) RemoveAsset(index int) error {
 	return nil
 }
 
-func (pf *Specification) Backtest(ctx context.Context, assets returns.Table, weightsAlgorithm backtestconfig.PolicyWeightCalculatorFunc) (backtest.Result, error) {
-	return pf.BacktestWithStartAndEndTime(ctx, time.Time{}, time.Time{}, assets, weightsAlgorithm)
+func (pf *Specification) Backtest(ctx context.Context, assets returns.Table, alg allocation.Algorithm) (backtest.Result, error) {
+	return pf.BacktestWithStartAndEndTime(ctx, time.Time{}, time.Time{}, assets, alg)
 }
-
-const (
-	PolicyAlgorithmEqualWeights    = "EqualWeights"
-	PolicyAlgorithmConstantWeights = "ConstantWeights"
-)
 
 func (pf *Specification) setDefaultPolicyWeightAlgorithm() {
-	if pf.Policy.WeightsAlgorithm != "" {
-		return
-	}
 	if len(pf.Policy.Weights) > 0 {
-		pf.Policy.WeightsAlgorithm = PolicyAlgorithmConstantWeights
+		pf.Policy.WeightsAlgorithm = (*allocation.ConstantWeights)(nil).Name()
 	} else {
-		pf.Policy.WeightsAlgorithm = PolicyAlgorithmEqualWeights
+		pf.Policy.WeightsAlgorithm = (*allocation.EqualWeights)(nil).Name()
 	}
 }
 
-func (pf *Specification) ensureEqualNumberOfWeightsAndAssets() error {
-	switch pf.Policy.WeightsAlgorithm {
-	case PolicyAlgorithmConstantWeights:
-		if len(pf.Policy.Weights) != len(pf.Assets) {
-			return fmt.Errorf("the number of assets and number of weights must be equal: len(assets) is %d and len(weights) is %d", len(pf.Assets), len(pf.Policy.Weights))
+func (pf *Specification) BacktestWithStartAndEndTime(ctx context.Context, start, end time.Time, assets returns.Table, alg allocation.Algorithm) (backtest.Result, error) {
+	if alg == nil {
+		var err error
+		alg, err = pf.Algorithm(nil)
+		if err != nil {
+			return backtest.Result{}, err
 		}
 	}
-	return nil
-}
-
-func (pf *Specification) policyWeightFunction(weights backtestconfig.PolicyWeightCalculatorFunc) (backtestconfig.PolicyWeightCalculatorFunc, error) {
-	switch pf.Policy.WeightsAlgorithm {
-	case PolicyAlgorithmEqualWeights:
-		return backtestconfig.EqualWeights{}.PolicyWeights, nil
-	case PolicyAlgorithmConstantWeights:
-		return backtestconfig.ConstantWeights(pf.Policy.Weights).PolicyWeights, nil
-	default:
-		if weights == nil {
-			return nil, fmt.Errorf("policy %q not supported by the backtest runner", pf.Policy.WeightsAlgorithm)
-		}
-		return weights, nil
-	}
-}
-
-func (pf *Specification) BacktestWithStartAndEndTime(ctx context.Context, start, end time.Time, assets returns.Table, weightsFn backtestconfig.PolicyWeightCalculatorFunc) (backtest.Result, error) {
-	if err := pf.ensureEqualNumberOfWeightsAndAssets(); err != nil {
-		return backtest.Result{}, err
-	}
-	var err error
-	weightsFn, err = pf.policyWeightFunction(weightsFn)
-	if err != nil {
-		return backtest.Result{}, err
-	}
-
-	return backtest.Run(ctx, end, start, assets, weightsFn,
+	return backtest.Run(ctx, end, start, assets, alg,
 		pf.Policy.WeightsAlgorithmLookBack.Function,
 		pf.Policy.WeightsUpdatingInterval.CheckFunction(),
 		pf.Policy.RebalancingInterval.CheckFunction(),
@@ -262,4 +227,29 @@ func (pf *Specification) filterEmptyAssetIDs() {
 		}
 	}
 	pf.Assets = filtered
+}
+
+func (pf *Specification) Algorithm(algorithmOptions []allocation.Algorithm) (allocation.Algorithm, error) {
+	if len(algorithmOptions) == 0 {
+		algorithmOptions = allocation.NewDefaultAlgorithmsList()
+	}
+
+	for _, alg := range algorithmOptions {
+		if alg.Name() != pf.Policy.WeightsAlgorithm {
+			continue
+		}
+		if se, ok := alg.(allocation.WeightSetter); ok {
+			if len(pf.Policy.Weights) != len(pf.Assets) {
+				return nil, errAssetAndWeightsLenMismatch(pf)
+			}
+			se.SetWeights(slices.Clone(pf.Policy.Weights))
+		}
+		return alg, nil // algorithm is known
+	}
+
+	return nil, errors.New("unknown algorithm")
+}
+
+func errAssetAndWeightsLenMismatch(spec *Specification) error {
+	return fmt.Errorf("expected the number of policy weights to be the same as the number of assets got %d but expected %d", len(spec.Policy.Weights), len(spec.Assets))
 }

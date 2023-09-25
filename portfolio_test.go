@@ -67,7 +67,7 @@ spec:
   assets: [ACWI, AGG]
   policy:
     weights: [60, 40]
-    weights_algorithm: PolicyAlgorithmConstantWeights
+    weights_algorithm: Constant Weights
     rebalancing_interval: Quarterly
 `
 
@@ -80,7 +80,7 @@ spec:
 
 	// Output:
 	// Name: 60/40
-	// Alg: PolicyAlgorithmConstantWeights
+	// Alg: Constant Weights
 }
 
 func ExampleOpen() {
@@ -94,7 +94,7 @@ func ExampleOpen() {
 
 	// Output:
 	// Name: 60/40
-	// Alg: ConstantWeights
+	// Alg: Constant Weights
 }
 
 func TestParse(t *testing.T) {
@@ -119,7 +119,7 @@ func TestParse(t *testing.T) {
 			Name: "the number of assets and policy weights do not match",
 			// language=yaml
 			SpecYAML:            `{type: Portfolio, spec: {assets: ["a"], policy: {weights: [1, 2]}}}`,
-			ErrorStringContains: "the number of assets and number of weights must be equal:",
+			ErrorStringContains: "expected the number of policy weights to be the same as the number of assets",
 		},
 		{
 			Name: "component field is invalid",
@@ -219,11 +219,11 @@ func TestPortfolio_Backtest(t *testing.T) {
 				Assets: []portfolio.Component{{ID: "AAPL"}},
 				Policy: portfolio.Policy{
 					Weights:          []float64{50, 50},
-					WeightsAlgorithm: portfolio.PolicyAlgorithmConstantWeights,
+					WeightsAlgorithm: "Constant Weights",
 				},
 			},
 			ctx:            context.Background(),
-			ErrorSubstring: "the number of assets and number of weights must be equal:",
+			ErrorSubstring: "expected the number of policy weights to be the same as the number of assets",
 		},
 		{
 			Name: "unknown policy algorithm",
@@ -235,7 +235,7 @@ func TestPortfolio_Backtest(t *testing.T) {
 				},
 			},
 			ctx:            context.Background(),
-			ErrorSubstring: `policy "unknown" not supported by the backtest runner`,
+			ErrorSubstring: `unknown algorithm`,
 		},
 	} {
 		t.Run(tt.Name, func(t *testing.T) {
@@ -256,9 +256,7 @@ func TestPortfolio_Backtest_custom_function(t *testing.T) {
 			{ID: "AAPL"},
 			{ID: "GOOG"},
 		},
-	}).Backtest(context.Background(), returns.NewTable([]returns.List{{}}), func(ctx context.Context, today time.Time, assets returns.Table, currentWeights []float64) ([]float64, error) {
-		return nil, fmt.Errorf("lemon")
-	})
+	}).Backtest(context.Background(), returns.NewTable([]returns.List{{}}), ErrorAlg{})
 	assert.EqualError(t, err, "lemon")
 }
 
@@ -468,4 +466,12 @@ func TestPortfolio_RemoveAsset(t *testing.T) {
 		}
 		require.Error(t, pf.RemoveAsset(-1))
 	})
+}
+
+type ErrorAlg struct{}
+
+func (ErrorAlg) Name() string { return "" }
+
+func (ErrorAlg) PolicyWeights(ctx context.Context, today time.Time, assets returns.Table, currentWeights []float64) ([]float64, error) {
+	return nil, fmt.Errorf("lemon")
 }
