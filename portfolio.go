@@ -239,9 +239,6 @@ func (pf *Specification) Algorithm(algorithmOptions []allocation.Algorithm) (all
 			continue
 		}
 		if se, ok := alg.(allocation.WeightSetter); ok {
-			if len(pf.Policy.Weights) != len(pf.Assets) {
-				return nil, errAssetAndWeightsLenMismatch(pf)
-			}
 			se.SetWeights(slices.Clone(pf.Policy.Weights))
 		}
 		return alg, nil // algorithm is known
