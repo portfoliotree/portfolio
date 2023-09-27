@@ -306,7 +306,7 @@ func (table Table) TimeWeightedReturns() []float64 {
 }
 
 func (table Table) AnnualizedArithmeticReturn(column int) float64 {
-	return calculations.AnnualizedArithmeticReturn(table.values[column])
+	return calculations.AnnualizedArithmeticReturn(table.values[column], calculations.PeriodsPerYear)
 }
 
 func (table Table) AnnualizedArithmeticReturns() []float64 {
