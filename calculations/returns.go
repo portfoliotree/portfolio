@@ -30,3 +30,10 @@ func productOfReturnValues(returns []float64) float64 {
 func TimeWeightedReturn(returns []float64) float64 {
 	return productOfReturnValues(returns) - 1
 }
+
+func SharpeRatio(portfolioReturnValues, riskFreeReturnValues []float64, periods float64) float64 {
+	portfolioReturn := AnnualizedArithmeticReturn(portfolioReturnValues, periods)
+	portfolioRisk := RiskFromStdDev(portfolioReturnValues)
+	riskFreeReturn := AnnualizedTimeWeightedReturn(riskFreeReturnValues, periods)
+	return (portfolioReturn - riskFreeReturn) / portfolioRisk
+}
