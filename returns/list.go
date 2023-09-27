@@ -107,7 +107,7 @@ func (list List) AnnualizedTimeWeightedReturn() float64 {
 }
 
 func (list List) AnnualizedArithmeticReturn() float64 {
-	return calculations.AnnualizedArithmeticReturn(list.Values())
+	return calculations.AnnualizedArithmeticReturn(list.Values(), calculations.PeriodsPerYear)
 }
 
 func compareTimes(x, y time.Time) int {
