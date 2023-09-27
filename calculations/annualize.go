@@ -23,7 +23,7 @@ func AnnualizedTimeWeightedReturn(returnValues []float64, periods float64) float
 }
 
 // AnnualizedArithmeticReturn must receive at least 2 returns otherwise it returns 0
-func AnnualizedArithmeticReturn(returnValues []float64) float64 {
+func AnnualizedArithmeticReturn(returnValues []float64, periods float64) float64 {
 	if len(returnValues) < 2 {
 		return 0
 	}
