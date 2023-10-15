@@ -97,5 +97,8 @@ func (dur Window) Sub(t time.Time) time.Time {
 }
 
 func (dur Window) Function(today time.Time, table returns.Table) returns.Table {
+	if !dur.IsSet() {
+		return table.Between(today, table.FirstTime())
+	}
 	return table.Between(today, dur.Sub(today))
 }
