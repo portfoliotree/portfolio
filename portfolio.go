@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"golang.org/x/exp/slices"
 	"gopkg.in/yaml.v3"
 
@@ -18,6 +19,23 @@ import (
 	"github.com/portfoliotree/portfolio/backtest/backtestconfig"
 	"github.com/portfoliotree/portfolio/returns"
 )
+
+type Identifier = primitive.ObjectID
+
+type Document struct {
+	ID       Identifier    `json:"_id"      yaml:"_id"      bson:"_id"`
+	Type     string        `json:"type"     yaml:"type"     bson:"type"`
+	Metadata Metadata      `json:"metadata" yaml:"metadata" bson:"metadata"`
+	Spec     Specification `json:"spec"     yaml:"spec"     bson:"spec"`
+}
+
+type Metadata struct {
+	Name        string       `json:"name,omitempty"        yaml:"name,omitempty"        bson:"name,omitempty"`
+	Benchmark   Component    `json:"benchmark,omitempty"   yaml:"benchmark,omitempty"   bson:"benchmark,omitempty"`
+	Description string       `json:"description,omitempty" yaml:"description,omitempty" bson:"description,omitempty"`
+	Privacy     string       `json:"privacy,omitempty"     yaml:"privacy,omitempty"     bson:"privacy,omitempty"`
+	Factors     []Identifier `json:"factors,omitempty"     yaml:"factors,omitempty"     bson:"factors,omitempty"`
+}
 
 // Specification models a portfolio.
 type Specification struct {
