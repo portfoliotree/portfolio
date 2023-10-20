@@ -48,15 +48,30 @@ func (table *Table) UnmarshalBSON(buf []byte) error {
 }
 
 func (table Table) MarshalBSON() ([]byte, error) {
-	return bson.Marshal(encodedTable{
-		Times:  table.times,
-		Values: table.values,
-	})
+	return bson.Marshal(newEncodedTable(table.times, table.values))
 }
 
 type encodedTable struct {
 	Times  []time.Time `json:"times" bson:"times"`
 	Values [][]float64 `json:"values" bson:"values"`
+}
+
+func newEncodedTable(times []time.Time, values [][]float64) encodedTable {
+	if times == nil {
+		times = make([]time.Time, 0)
+	}
+	if values == nil {
+		values = make([][]float64, 0)
+	}
+	for i := range values {
+		if values[i] == nil {
+			values[i] = make([]float64, 0)
+		}
+	}
+	return encodedTable{
+		Times:  times,
+		Values: values,
+	}
 }
 
 func (table *Table) UnmarshalJSON(buf []byte) error {
@@ -68,10 +83,7 @@ func (table *Table) UnmarshalJSON(buf []byte) error {
 }
 
 func (table Table) MarshalJSON() ([]byte, error) {
-	t := encodedTable{
-		Times:  table.times,
-		Values: table.values,
-	}
+	t := newEncodedTable(table.times, table.values)
 	err := round.Recursive(t.Values, 6)
 	if err != nil {
 		return nil, err
