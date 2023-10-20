@@ -245,6 +245,12 @@ func (table Table) TimeBefore(tm time.Time) (time.Time, bool) {
 	return next, !next.IsZero()
 }
 
+func (table Table) ClosestTimeOnOrBefore(tm time.Time) (time.Time, bool) {
+	index := indexOfClosest(table.times, identity[time.Time], tm)
+	next := indexOrEmpty(table.times, index)
+	return next, !next.IsZero()
+}
+
 func identity[T any](t T) T { return t }
 
 func (table Table) Lists() []List {
