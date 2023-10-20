@@ -456,22 +456,26 @@ func TestTable_TimeBefore(t *testing.T) {
 		assert.False(t, hasReturn)
 	})
 	t.Run("on a Monday", func(t *testing.T) {
+		in := fixtures.T(t, fixtures.Day2)
+		require.Equal(t, time.Monday, in.Weekday())
 		table := returns.NewTable([]returns.List{
 			{rtn(t, fixtures.LastDay, 0), rtn(t, fixtures.Day2, 0), rtn(t, fixtures.Day1, 0), rtn(t, fixtures.FirstDay, 0)},
 			{rtn(t, fixtures.LastDay, 0), rtn(t, fixtures.Day2, 0), rtn(t, fixtures.Day1, 0), rtn(t, fixtures.FirstDay, 0)},
 		})
-		after, hasReturn := table.TimeBefore(fixtures.T(t, fixtures.Day2))
+		result, hasReturn := table.TimeBefore(in)
 		assert.True(t, hasReturn)
-		assert.Equal(t, after, fixtures.T(t, fixtures.Day1))
+		assert.Equal(t, fixtures.T(t, fixtures.Day1), result)
 	})
 	t.Run("on a Friday", func(t *testing.T) {
+		in := fixtures.T(t, fixtures.Day1)
+		require.Equal(t, in.Weekday(), time.Friday)
 		table := returns.NewTable([]returns.List{
 			{rtn(t, fixtures.LastDay, 0), rtn(t, fixtures.Day2, 0), rtn(t, fixtures.Day1, 0), rtn(t, fixtures.FirstDay, 0)},
 			{rtn(t, fixtures.LastDay, 0), rtn(t, fixtures.Day2, 0), rtn(t, fixtures.Day1, 0), rtn(t, fixtures.FirstDay, 0)},
 		})
-		after, hasReturn := table.TimeBefore(fixtures.T(t, fixtures.Day3))
+		result, hasReturn := table.TimeBefore(in)
 		assert.True(t, hasReturn)
-		assert.Equal(t, after, fixtures.T(t, fixtures.Day2))
+		assert.Equal(t, fixtures.T(t, fixtures.Day0), result)
 	})
 }
 
