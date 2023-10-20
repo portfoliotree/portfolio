@@ -10,8 +10,9 @@ import (
 )
 
 type Component struct {
-	Type string `yaml:"type,omitempty"`
-	ID   string `yaml:"id,omitempty"`
+	Type  string `yaml:"type,omitempty"  json:"type,omitempty"  bson:"type"`
+	ID    string `yaml:"id,omitempty"    json:"id,omitempty"    bson:"id"`
+	Label string `yaml:"label,omitempty" json:"label,omitempty" bson:"label"`
 }
 
 var componentExpression = regexp.MustCompile(`^[a-zA-Z0-9.:s]{1,24}$`)
