@@ -31,6 +31,7 @@ type Metadata struct {
 	Description string               `json:"description,omitempty" yaml:"description,omitempty" bson:"description,omitempty"`
 	Privacy     string               `json:"privacy,omitempty"     yaml:"privacy,omitempty"     bson:"privacy,omitempty"`
 	Factors     []primitive.ObjectID `json:"factors,omitempty"     yaml:"factors,omitempty"     bson:"factors,omitempty"`
+	IsFactor    bool                 `bson:"is_factor,omitempty"   yaml:"is_factor,omitempty"   bson:"is_factor,omitempty"`
 }
 
 // Specification models a portfolio.
