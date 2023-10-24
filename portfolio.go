@@ -30,11 +30,11 @@ type Document struct {
 }
 
 type Metadata struct {
-	Name        string       `json:"name,omitempty"        yaml:"name,omitempty"        bson:"name,omitempty"`
-	Benchmark   Component    `json:"benchmark,omitempty"   yaml:"benchmark,omitempty"   bson:"benchmark,omitempty"`
-	Description string       `json:"description,omitempty" yaml:"description,omitempty" bson:"description,omitempty"`
-	Privacy     string       `json:"privacy,omitempty"     yaml:"privacy,omitempty"     bson:"privacy,omitempty"`
-	Factors     []Identifier `json:"factors,omitempty"     yaml:"factors,omitempty"     bson:"factors,omitempty"`
+	Name        string      `json:"name,omitempty"        yaml:"name,omitempty"        bson:"name,omitempty"`
+	Benchmark   Component   `json:"benchmark,omitempty"   yaml:"benchmark,omitempty"   bson:"benchmark,omitempty"`
+	Description string      `json:"description,omitempty" yaml:"description,omitempty" bson:"description,omitempty"`
+	Privacy     string      `json:"privacy,omitempty"     yaml:"privacy,omitempty"     bson:"privacy,omitempty"`
+	Factors     []Component `json:"factors,omitempty"     yaml:"factors,omitempty"     bson:"factors,omitempty"`
 }
 
 // Specification models a portfolio.
