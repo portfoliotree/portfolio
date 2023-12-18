@@ -96,6 +96,11 @@ func ParseSpecifications(r io.Reader) ([]Specification, error) {
 
 		pf := spec.Spec
 		pf.setDefaultPolicyWeightAlgorithm()
+		if pf.Policy.WeightsAlgorithm == allocation.ConstantWeightsAlgorithmName {
+			if len(pf.Policy.Weights) != len(pf.Assets) {
+				return result, fmt.Errorf("expected the number of policy weights to be the same as the number of assets got %d but expected %d", len(pf.Policy.Weights), len(pf.Assets))
+			}
+		}
 		result = append(result, pf)
 	}
 }
