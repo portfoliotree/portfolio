@@ -153,11 +153,10 @@ func TestParse(t *testing.T) {
 			p, err := portfolio.ParseOneSpecification(tt.SpecYAML)
 			if tt.ErrorStringContains == "" {
 				assert.NoError(t, err)
+				assert.Equal(t, tt.Portfolio, p)
 			} else {
-				assert.Error(t, err)
 				assert.ErrorContains(t, err, tt.ErrorStringContains)
 			}
-			assert.Equal(t, tt.Portfolio, p)
 		})
 	}
 }

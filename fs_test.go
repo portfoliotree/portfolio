@@ -60,7 +60,7 @@ func TestParseSpecificationFile(t *testing.T) {
 					},
 					Policy: portfolio.Policy{
 						RebalancingInterval: "Quarterly",
-						WeightsAlgorithm:    allocation.ConstantWeightsAlgorithmName,
+						WeightsAlgorithm:    allocation.EqualWeightsAlgorithmName,
 					},
 					Filepath: "examples/maang_portfolio.yml",
 				},
