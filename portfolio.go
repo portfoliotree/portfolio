@@ -5,8 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"net/url"
-	"strconv"
 	"strings"
 	"time"
 
@@ -98,7 +96,7 @@ func ParseSpecifications(r io.Reader) ([]Specification, error) {
 		pf.setDefaultPolicyWeightAlgorithm()
 		if pf.Policy.WeightsAlgorithm == allocation.ConstantWeightsAlgorithmName {
 			if len(pf.Policy.Weights) != len(pf.Assets) {
-				return result, fmt.Errorf("expected the number of policy weights to be the same as the number of assets got %d but expected %d", len(pf.Policy.Weights), len(pf.Assets))
+				return result, errAssetAndWeightsLenMismatch(&spec.Spec)
 			}
 		}
 		result = append(result, pf)
@@ -147,84 +145,6 @@ type Policy struct {
 	WeightsAlgorithm         string                  `yaml:"weights_algorithm,omitempty"`
 	WeightsAlgorithmLookBack backtestconfig.Window   `yaml:"weights_algorithm_look_back_window,omitempty"`
 	WeightsUpdatingInterval  backtestconfig.Interval `yaml:"weights_updating_interval,omitempty"`
-}
-
-func (pf *Specification) ParseValues(q url.Values) error {
-	if q.Has("asset-id") {
-		pf.Assets = pf.Assets[:0]
-		for _, assetID := range q["asset-id"] {
-			pf.Assets = append(pf.Assets, Component{ID: assetID})
-		}
-	}
-	if q.Has("benchmark-id") {
-		pf.Benchmark.ID = q.Get("benchmark-id")
-	}
-	if q.Has("name") {
-		pf.Name = q.Get("name")
-	}
-	if q.Has("filepath") {
-		pf.Filepath = q.Get("filepath")
-	}
-	if q.Has("policy-rebalance") {
-		pf.Policy.RebalancingInterval = backtestconfig.Interval(q.Get("policy-rebalance"))
-	}
-	if q.Has("policy-weights-algorithm") {
-		pf.Policy.WeightsAlgorithm = q.Get("policy-weights-algorithm")
-	}
-	if q.Has("policy-weight") {
-		pf.Policy.Weights = pf.Policy.Weights[:0]
-		for i, weight := range q["policy-weight"] {
-			f, err := strconv.ParseFloat(weight, 64)
-			if err != nil {
-				return fmt.Errorf("failed to parse policy weight at indx %d: %w", i, err)
-			}
-			pf.Policy.Weights = append(pf.Policy.Weights, f)
-		}
-	}
-	if q.Has("policy-update-weights") {
-		pf.Policy.WeightsUpdatingInterval = backtestconfig.Interval(q.Get("policy-update-weights"))
-	}
-	if q.Has("policy-weight-algorithm-look-back") {
-		pf.Policy.WeightsAlgorithmLookBack = backtestconfig.Window(q.Get("policy-weight-algorithm-look-back"))
-	}
-	pf.filterEmptyAssetIDs()
-	return pf.Validate()
-}
-
-func (pf *Specification) Values() url.Values {
-	q := make(url.Values)
-	if pf.Name != "" {
-		q.Set("name", pf.Name)
-	}
-	if pf.Benchmark.ID != "" {
-		q.Set("benchmark-id", pf.Benchmark.ID)
-	}
-	if pf.Filepath != "" {
-		q.Set("filepath", pf.Filepath)
-	}
-	if pf.Assets != nil {
-		for _, asset := range pf.Assets {
-			q.Add("asset-id", asset.ID)
-		}
-	}
-	if pf.Policy.RebalancingInterval != "" {
-		q.Set("policy-rebalance", pf.Policy.RebalancingInterval.String())
-	}
-	if pf.Policy.WeightsAlgorithm != "" {
-		q.Set("policy-weights-algorithm", pf.Policy.WeightsAlgorithm)
-	}
-	if pf.Policy.Weights != nil {
-		for _, w := range pf.Policy.Weights {
-			q.Add("policy-weight", strconv.FormatFloat(w, 'f', 4, 64))
-		}
-	}
-	if pf.Policy.WeightsUpdatingInterval != "" {
-		q.Set("policy-update-weights", string(pf.Policy.WeightsUpdatingInterval))
-	}
-	if pf.Policy.WeightsAlgorithmLookBack != "" {
-		q.Set("policy-weight-algorithm-look-back", pf.Policy.WeightsAlgorithmLookBack.String())
-	}
-	return q
 }
 
 // Validate does some simple validations.
