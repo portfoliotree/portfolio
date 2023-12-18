@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
 	"os"
 	"path/filepath"
 	"testing"
@@ -32,12 +31,12 @@ func TestMain(m *testing.M) {
 
 func testdataAssetReturns(crp portfolio.ComponentReturnsProvider) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
-		var pf portfolio.Specification
-		if err := pf.ParseValues(req.URL.Query()); err != nil {
-			http.Error(res, err.Error(), http.StatusInternalServerError)
+		assets, err := portfolio.ParseComponentsFromURL(req.URL.Query(), "asset")
+		if err != nil {
+			http.Error(res, err.Error(), http.StatusBadRequest)
 			return
 		}
-		table, err := crp.ComponentReturnsTable(req.Context(), pf.Assets...)
+		table, err := crp.ComponentReturnsTable(req.Context(), assets...)
 		if err != nil {
 			http.Error(res, err.Error(), http.StatusInternalServerError)
 			return
@@ -292,112 +291,6 @@ func Test_Portfolio_Validate(t *testing.T) {
 			}
 		})
 	}
-}
-
-func Test_Portfolio_ParseValues(t *testing.T) {
-	for _, tt := range []struct {
-		Name      string
-		Values    url.Values
-		In, Out   portfolio.Specification
-		ExpectErr bool
-	}{
-		{
-			Name: "set everything",
-			Values: url.Values{
-				"name":                              []string{"X"},
-				"asset-id":                          []string{"y", "z"},
-				"benchmark-id":                      []string{"b"},
-				"filepath":                          []string{"f"},
-				"policy-weight":                     []string{".5", ".5"},
-				"policy-rebalance":                  []string{"Daily"},
-				"policy-weights-algorithm":          []string{"Static"},
-				"policy-update-weights":             []string{"Daily"},
-				"policy-weight-algorithm-look-back": []string{"1 Week"},
-			},
-			Out: portfolio.Specification{
-				Name: "X",
-				Assets: []portfolio.Component{
-					{ID: "y"},
-					{ID: "z"},
-				},
-				Benchmark: portfolio.Component{
-					ID: "b",
-				},
-				Filepath: "f",
-				Policy: portfolio.Policy{
-					RebalancingInterval:      "Daily",
-					WeightsAlgorithm:         "Static",
-					Weights:                  []float64{0.5, 0.5},
-					WeightsUpdatingInterval:  "Daily",
-					WeightsAlgorithmLookBack: "1 Week",
-				},
-			},
-		},
-		{
-			Name:   "empty values do not override",
-			Values: url.Values{},
-			In: portfolio.Specification{
-				Name:      "no change",
-				Benchmark: portfolio.Component{ID: "b"},
-				Assets:    []portfolio.Component{{ID: "a1"}},
-				Filepath:  "f",
-			},
-			Out: portfolio.Specification{
-				Name:      "no change",
-				Benchmark: portfolio.Component{ID: "b"},
-				Assets:    []portfolio.Component{{ID: "a1"}},
-				Filepath:  "f",
-			},
-		},
-	} {
-		t.Run(tt.Name, func(t *testing.T) {
-			pf := &tt.In
-			err := pf.ParseValues(tt.Values)
-			if tt.ExpectErr {
-				assert.Error(t, err)
-			} else {
-				assert.NoError(t, err)
-			}
-			assert.Equal(t, tt.Out, *pf)
-		})
-	}
-}
-
-func Test_Portfolio_Values(t *testing.T) {
-	t.Run("encode and decode", func(t *testing.T) {
-		pf := portfolio.Specification{
-			Name: "X",
-			Assets: []portfolio.Component{
-				{ID: "y"},
-				{ID: "z"},
-			},
-			Benchmark: portfolio.Component{
-				ID: "b",
-			},
-			Filepath: "f",
-			Policy: portfolio.Policy{
-				RebalancingInterval:      "Daily",
-				WeightsAlgorithm:         "Static",
-				Weights:                  []float64{0.5, 0.5},
-				WeightsUpdatingInterval:  "Daily",
-				WeightsAlgorithmLookBack: "1 Week",
-			},
-		}
-
-		var update portfolio.Specification
-		e := pf.Values().Encode()
-		q, err := url.ParseQuery(e)
-		require.NoError(t, err)
-		assert.NoError(t, update.ParseValues(q))
-		assert.Equal(t, pf, update)
-	})
-
-	t.Run("fail to parse float", func(t *testing.T) {
-		values, err := url.ParseQuery(`policy-weight=x`)
-		require.NoError(t, err)
-		var pf portfolio.Specification
-		assert.Error(t, pf.ParseValues(values))
-	})
 }
 
 func TestPortfolio_RemoveAsset(t *testing.T) {

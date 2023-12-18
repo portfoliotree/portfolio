@@ -2,12 +2,36 @@ package portfolio_test
 
 import (
 	"context"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
 	"github.com/portfoliotree/portfolio"
 )
+
+func Test_APIEndpoints(t *testing.T) {
+	if value, found := os.LookupEnv("CI"); !found || value != "true" {
+		t.Skip("Skipping test in CI environment")
+	}
+
+	t.Run("returns", func(t *testing.T) {
+		pf := portfolio.Specification{
+			Assets: []portfolio.Component{
+				{ID: "AAPL"},
+				{ID: "GOOG"},
+			},
+		}
+		table, err := pf.AssetReturns(context.Background())
+		assert.NoError(t, err)
+		if table.NumberOfColumns() != 2 {
+			t.Errorf("Expected 2 columns, got %d", table.NumberOfColumns())
+		}
+		if table.NumberOfRows() < 10 {
+			t.Errorf("Expected at least 10 rows, got %d", table.NumberOfRows())
+		}
+	})
+}
 
 func TestSpecification_AssetReturns(t *testing.T) {
 	for _, tt := range []struct {
