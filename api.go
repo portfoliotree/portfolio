@@ -11,8 +11,6 @@ import (
 	"os"
 	"strings"
 
-	"go.mongodb.org/mongo-driver/bson/primitive"
-
 	"github.com/portfoliotree/portfolio/returns"
 )
 
@@ -57,22 +55,6 @@ func (pf *Specification) AssetReturns(ctx context.Context) (returns.Table, error
 	}
 
 	return doJSONRequest[returns.Table](http.DefaultClient.Do, req)
-}
-
-func ParseComponentsFromURL(values url.Values, prefix string) ([]Component, error) {
-	assetValues, ok := values[prefix+"-id"]
-	if !ok {
-		return nil, errors.New("use asset-id parameters to specify asset returns")
-	}
-	components := make([]Component, 0, len(assetValues))
-	for _, v := range assetValues {
-		if _, err := primitive.ObjectIDFromHex(v); err == nil {
-			components = append(components, Component{Type: "Portfolio", ID: v})
-			continue
-		}
-		components = append(components, Component{Type: "Security", ID: v})
-	}
-	return components, nil
 }
 
 func doJSONRequest[T any](do func(r *http.Request) (*http.Response, error), req *http.Request) (T, error) {

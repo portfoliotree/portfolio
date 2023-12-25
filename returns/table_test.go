@@ -280,9 +280,6 @@ func TestTable_Between(t *testing.T) {
 
 func TestTable_AddColumn(t *testing.T) {
 	t.Run("when adding list with an additional row", func(t *testing.T) {
-		t.Skip(`
-AddColumn now does not add a column to the table if the table does not already have a row.
-`)
 		table := returns.NewTable([]returns.List{
 			{rtn(t, fixtures.Day3, .1), rtn(t, fixtures.Day1, .1), rtn(t, fixtures.Day0, .1)},
 		})
@@ -459,84 +456,22 @@ func TestTable_TimeBefore(t *testing.T) {
 		assert.False(t, hasReturn)
 	})
 	t.Run("on a Monday", func(t *testing.T) {
-		in := fixtures.T(t, fixtures.Day2)
-		require.Equal(t, time.Monday, in.Weekday())
 		table := returns.NewTable([]returns.List{
 			{rtn(t, fixtures.LastDay, 0), rtn(t, fixtures.Day2, 0), rtn(t, fixtures.Day1, 0), rtn(t, fixtures.FirstDay, 0)},
 			{rtn(t, fixtures.LastDay, 0), rtn(t, fixtures.Day2, 0), rtn(t, fixtures.Day1, 0), rtn(t, fixtures.FirstDay, 0)},
 		})
-		result, hasReturn := table.TimeBefore(in)
+		after, hasReturn := table.TimeBefore(fixtures.T(t, fixtures.Day2))
 		assert.True(t, hasReturn)
-		assert.Equal(t, fixtures.T(t, fixtures.Day1), result)
+		assert.Equal(t, after, fixtures.T(t, fixtures.Day1))
 	})
 	t.Run("on a Friday", func(t *testing.T) {
-		in := fixtures.T(t, fixtures.Day1)
-		require.Equal(t, in.Weekday(), time.Friday)
 		table := returns.NewTable([]returns.List{
 			{rtn(t, fixtures.LastDay, 0), rtn(t, fixtures.Day2, 0), rtn(t, fixtures.Day1, 0), rtn(t, fixtures.FirstDay, 0)},
 			{rtn(t, fixtures.LastDay, 0), rtn(t, fixtures.Day2, 0), rtn(t, fixtures.Day1, 0), rtn(t, fixtures.FirstDay, 0)},
 		})
-		result, hasReturn := table.TimeBefore(in)
+		after, hasReturn := table.TimeBefore(fixtures.T(t, fixtures.Day3))
 		assert.True(t, hasReturn)
-		assert.Equal(t, fixtures.T(t, fixtures.Day0), result)
-	})
-}
-
-func TestTable_ClosestTimeOnOrBefore(t *testing.T) {
-	t.Run("on a Friday", func(t *testing.T) {
-		in := fixtures.T(t, fixtures.Day1)
-		require.Equal(t, in.Weekday(), time.Friday)
-		table := returns.NewTable([]returns.List{
-			{rtn(t, fixtures.LastDay, 0), rtn(t, fixtures.Day2, 0), rtn(t, fixtures.Day1, 0), rtn(t, fixtures.FirstDay, 0)},
-		})
-		result, hasReturn := table.ClosestTimeOnOrBefore(in)
-		assert.True(t, hasReturn)
-		assert.Equal(t, fixtures.T(t, fixtures.Day1), result)
-	})
-	t.Run("exactly between", func(t *testing.T) {
-		in := fixtures.T(t, fixtures.Day2)
-		table := returns.NewTable([]returns.List{
-			{rtn(t, fixtures.Day3, 0), rtn(t, fixtures.Day1, 0)},
-		})
-		result, hasReturn := table.ClosestTimeOnOrBefore(in)
-		assert.True(t, hasReturn)
-		assert.Equal(t, fixtures.T(t, fixtures.Day1), result)
-	})
-	t.Run("between closer to final day", func(t *testing.T) {
-		in := fixtures.T(t, fixtures.Day2)
-		table := returns.NewTable([]returns.List{
-			{rtn(t, fixtures.Day3, 0), rtn(t, fixtures.Day0, 0)},
-		})
-		result, hasReturn := table.ClosestTimeOnOrBefore(in)
-		assert.True(t, hasReturn)
-		assert.Equal(t, fixtures.T(t, fixtures.Day0), result)
-	})
-	t.Run("between closer to first day", func(t *testing.T) {
-		in := fixtures.T(t, fixtures.Day1)
-		table := returns.NewTable([]returns.List{
-			{rtn(t, fixtures.Day3, 0), rtn(t, fixtures.Day0, 0)},
-		})
-		result, hasReturn := table.ClosestTimeOnOrBefore(in)
-		assert.True(t, hasReturn)
-		assert.Equal(t, fixtures.T(t, fixtures.Day0), result)
-	})
-	t.Run("exactly first", func(t *testing.T) {
-		in := fixtures.T(t, fixtures.Day0)
-		table := returns.NewTable([]returns.List{
-			{rtn(t, fixtures.Day1, 0), rtn(t, fixtures.Day0, 0)},
-		})
-		result, hasReturn := table.ClosestTimeOnOrBefore(in)
-		assert.True(t, hasReturn)
-		assert.Equal(t, fixtures.T(t, fixtures.Day0), result)
-	})
-	t.Run("exactly last", func(t *testing.T) {
-		in := fixtures.T(t, fixtures.Day1)
-		table := returns.NewTable([]returns.List{
-			{rtn(t, fixtures.Day1, 0), rtn(t, fixtures.Day0, 0)},
-		})
-		result, hasReturn := table.ClosestTimeOnOrBefore(in)
-		assert.True(t, hasReturn)
-		assert.Equal(t, fixtures.T(t, fixtures.Day1), result)
+		assert.Equal(t, after, fixtures.T(t, fixtures.Day2))
 	})
 }
 

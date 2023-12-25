@@ -48,30 +48,15 @@ func (table *Table) UnmarshalBSON(buf []byte) error {
 }
 
 func (table Table) MarshalBSON() ([]byte, error) {
-	return bson.Marshal(newEncodedTable(table.times, table.values))
+	return bson.Marshal(encodedTable{
+		Times:  table.times,
+		Values: table.values,
+	})
 }
 
 type encodedTable struct {
 	Times  []time.Time `json:"times" bson:"times"`
 	Values [][]float64 `json:"values" bson:"values"`
-}
-
-func newEncodedTable(times []time.Time, values [][]float64) encodedTable {
-	if times == nil {
-		times = make([]time.Time, 0)
-	}
-	if values == nil {
-		values = make([][]float64, 0)
-	}
-	for i := range values {
-		if values[i] == nil {
-			values[i] = make([]float64, 0)
-		}
-	}
-	return encodedTable{
-		Times:  times,
-		Values: values,
-	}
 }
 
 func (table *Table) UnmarshalJSON(buf []byte) error {
@@ -83,7 +68,10 @@ func (table *Table) UnmarshalJSON(buf []byte) error {
 }
 
 func (table Table) MarshalJSON() ([]byte, error) {
-	t := newEncodedTable(table.times, table.values)
+	t := encodedTable{
+		Times:  table.times,
+		Values: table.values,
+	}
 	err := round.Recursive(t.Values, 6)
 	if err != nil {
 		return nil, err
@@ -196,23 +184,39 @@ func (table Table) addAdditionalColumn(list List) Table {
 	list = list.Between(table.LastTime(), table.FirstTime())
 	updated := table.Between(list.LastTime(), list.FirstTime())
 
-	newValues := make([]float64, len(updated.times))
 	for _, r := range list {
-		i, found := updated.rowForTime(r.Time)
-		if !found {
-			continue
-		}
-		newValues[i] = r.Value
+		_, updated = updated.ensureRowForTime(r.Time)
 	}
 
+	newValues := make([]float64, len(updated.times))
+	for i, tm := range updated.times {
+		value, _ := list.Value(tm)
+		newValues[i] = value
+	}
 	updated.values = append(updated.values, newValues)
 	return updated
 }
 
-func (table Table) rowForTime(tm time.Time) (index int, exists bool) {
-	return slices.BinarySearchFunc(table.times, tm, func(et time.Time, t time.Time) int {
-		return et.Compare(t) * -1
-	})
+func (table Table) ensureRowForTime(tm time.Time) (index int, updated Table) {
+	for i, et := range table.times {
+		if et.Equal(tm) {
+			return i, table
+		}
+		if tm.After(et) {
+			index, updated = i, table
+			updated.times = append(updated.times[:i], append([]time.Time{tm}, updated.times[i:]...)...)
+			for j, values := range updated.values {
+				updated.values[j] = append(values[:i], append([]float64{0}, values[i:]...)...)
+			}
+			break
+
+			//// an early return makes the coverage dip below 100% because the
+			//// empty block outside the loop would never execute. This break
+			//// is essentially like the following line
+			// return index, updated
+		}
+	}
+	return index, updated
 }
 
 func (table Table) FirstTime() time.Time { return indexOrEmpty(table.times, firstIndex(table.times)) }
@@ -238,12 +242,6 @@ func (table Table) TimeBefore(tm time.Time) (time.Time, bool) {
 	}
 	index := indexOfClosest(table.times, identity[time.Time], tm)
 	next := indexOrEmpty(table.times, index+1)
-	return next, !next.IsZero()
-}
-
-func (table Table) ClosestTimeOnOrBefore(tm time.Time) (time.Time, bool) {
-	index := indexOfClosest(table.times, identity[time.Time], tm)
-	next := indexOrEmpty(table.times, index)
 	return next, !next.IsZero()
 }
 

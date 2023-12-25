@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
 	"path/filepath"
 	"testing"
@@ -31,12 +32,12 @@ func TestMain(m *testing.M) {
 
 func testdataAssetReturns(crp portfolio.ComponentReturnsProvider) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
-		assets, err := portfolio.ParseComponentsFromURL(req.URL.Query(), "asset")
-		if err != nil {
-			http.Error(res, err.Error(), http.StatusBadRequest)
+		var pf portfolio.Specification
+		if err := pf.ParseValues(req.URL.Query()); err != nil {
+			http.Error(res, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		table, err := crp.ComponentReturnsTable(req.Context(), assets...)
+		table, err := crp.ComponentReturnsTable(req.Context(), pf.Assets...)
 		if err != nil {
 			http.Error(res, err.Error(), http.StatusInternalServerError)
 			return
@@ -66,7 +67,7 @@ spec:
   assets: [ACWI, AGG]
   policy:
     weights: [60, 40]
-    weights_algorithm: Constant Weights
+    weights_algorithm: PolicyAlgorithmConstantWeights
     rebalancing_interval: Quarterly
 `
 
@@ -79,7 +80,7 @@ spec:
 
 	// Output:
 	// Name: 60/40
-	// Alg: Constant Weights
+	// Alg: PolicyAlgorithmConstantWeights
 }
 
 func ExampleOpen() {
@@ -93,7 +94,7 @@ func ExampleOpen() {
 
 	// Output:
 	// Name: 60/40
-	// Alg: Constant Weights
+	// Alg: ConstantWeights
 }
 
 func TestParse(t *testing.T) {
@@ -118,7 +119,7 @@ func TestParse(t *testing.T) {
 			Name: "the number of assets and policy weights do not match",
 			// language=yaml
 			SpecYAML:            `{type: Portfolio, spec: {assets: ["a"], policy: {weights: [1, 2]}}}`,
-			ErrorStringContains: "expected the number of policy weights to be the same as the number of assets",
+			ErrorStringContains: "the number of assets and number of weights must be equal:",
 		},
 		{
 			Name: "component field is invalid",
@@ -152,10 +153,11 @@ func TestParse(t *testing.T) {
 			p, err := portfolio.ParseOneSpecification(tt.SpecYAML)
 			if tt.ErrorStringContains == "" {
 				assert.NoError(t, err)
-				assert.Equal(t, tt.Portfolio, p)
 			} else {
+				assert.Error(t, err)
 				assert.ErrorContains(t, err, tt.ErrorStringContains)
 			}
+			assert.Equal(t, tt.Portfolio, p)
 		})
 	}
 }
@@ -217,11 +219,11 @@ func TestPortfolio_Backtest(t *testing.T) {
 				Assets: []portfolio.Component{{ID: "AAPL"}},
 				Policy: portfolio.Policy{
 					Weights:          []float64{50, 50},
-					WeightsAlgorithm: "Constant Weights",
+					WeightsAlgorithm: portfolio.PolicyAlgorithmConstantWeights,
 				},
 			},
 			ctx:            context.Background(),
-			ErrorSubstring: "expected the number of policy weights to be the same as the number of assets",
+			ErrorSubstring: "the number of assets and number of weights must be equal:",
 		},
 		{
 			Name: "unknown policy algorithm",
@@ -233,12 +235,12 @@ func TestPortfolio_Backtest(t *testing.T) {
 				},
 			},
 			ctx:            context.Background(),
-			ErrorSubstring: `unknown algorithm`,
+			ErrorSubstring: `policy "unknown" not supported by the backtest runner`,
 		},
 	} {
 		t.Run(tt.Name, func(t *testing.T) {
 			pf := tt.Portfolio
-			_, err := pf.Backtest(tt.ctx, returns.NewTable([]returns.List{{}}), nil)
+			_, err := pf.Backtest(tt.ctx, returns.Table{}, nil)
 			if tt.ErrorSubstring == "" {
 				assert.NoError(t, err)
 			} else {
@@ -254,7 +256,9 @@ func TestPortfolio_Backtest_custom_function(t *testing.T) {
 			{ID: "AAPL"},
 			{ID: "GOOG"},
 		},
-	}).Backtest(context.Background(), returns.NewTable([]returns.List{{}}), ErrorAlg{})
+	}).Backtest(context.Background(), returns.NewTable([]returns.List{{}}), func(ctx context.Context, today time.Time, assets returns.Table, currentWeights []float64) ([]float64, error) {
+		return nil, fmt.Errorf("lemon")
+	})
 	assert.EqualError(t, err, "lemon")
 }
 
@@ -291,6 +295,112 @@ func Test_Portfolio_Validate(t *testing.T) {
 			}
 		})
 	}
+}
+
+func Test_Portfolio_ParseValues(t *testing.T) {
+	for _, tt := range []struct {
+		Name      string
+		Values    url.Values
+		In, Out   portfolio.Specification
+		ExpectErr bool
+	}{
+		{
+			Name: "set everything",
+			Values: url.Values{
+				"name":                              []string{"X"},
+				"asset-id":                          []string{"y", "z"},
+				"benchmark-id":                      []string{"b"},
+				"filepath":                          []string{"f"},
+				"policy-weight":                     []string{".5", ".5"},
+				"policy-rebalance":                  []string{"Daily"},
+				"policy-weights-algorithm":          []string{"Static"},
+				"policy-update-weights":             []string{"Daily"},
+				"policy-weight-algorithm-look-back": []string{"1 Week"},
+			},
+			Out: portfolio.Specification{
+				Name: "X",
+				Assets: []portfolio.Component{
+					{ID: "y"},
+					{ID: "z"},
+				},
+				Benchmark: portfolio.Component{
+					ID: "b",
+				},
+				Filepath: "f",
+				Policy: portfolio.Policy{
+					RebalancingInterval:      "Daily",
+					WeightsAlgorithm:         "Static",
+					Weights:                  []float64{0.5, 0.5},
+					WeightsUpdatingInterval:  "Daily",
+					WeightsAlgorithmLookBack: "1 Week",
+				},
+			},
+		},
+		{
+			Name:   "empty values do not override",
+			Values: url.Values{},
+			In: portfolio.Specification{
+				Name:      "no change",
+				Benchmark: portfolio.Component{ID: "b"},
+				Assets:    []portfolio.Component{{ID: "a1"}},
+				Filepath:  "f",
+			},
+			Out: portfolio.Specification{
+				Name:      "no change",
+				Benchmark: portfolio.Component{ID: "b"},
+				Assets:    []portfolio.Component{{ID: "a1"}},
+				Filepath:  "f",
+			},
+		},
+	} {
+		t.Run(tt.Name, func(t *testing.T) {
+			pf := &tt.In
+			err := pf.ParseValues(tt.Values)
+			if tt.ExpectErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+			assert.Equal(t, tt.Out, *pf)
+		})
+	}
+}
+
+func Test_Portfolio_Values(t *testing.T) {
+	t.Run("encode and decode", func(t *testing.T) {
+		pf := portfolio.Specification{
+			Name: "X",
+			Assets: []portfolio.Component{
+				{ID: "y"},
+				{ID: "z"},
+			},
+			Benchmark: portfolio.Component{
+				ID: "b",
+			},
+			Filepath: "f",
+			Policy: portfolio.Policy{
+				RebalancingInterval:      "Daily",
+				WeightsAlgorithm:         "Static",
+				Weights:                  []float64{0.5, 0.5},
+				WeightsUpdatingInterval:  "Daily",
+				WeightsAlgorithmLookBack: "1 Week",
+			},
+		}
+
+		var update portfolio.Specification
+		e := pf.Values().Encode()
+		q, err := url.ParseQuery(e)
+		require.NoError(t, err)
+		assert.NoError(t, update.ParseValues(q))
+		assert.Equal(t, pf, update)
+	})
+
+	t.Run("fail to parse float", func(t *testing.T) {
+		values, err := url.ParseQuery(`policy-weight=x`)
+		require.NoError(t, err)
+		var pf portfolio.Specification
+		assert.Error(t, pf.ParseValues(values))
+	})
 }
 
 func TestPortfolio_RemoveAsset(t *testing.T) {
@@ -358,12 +468,4 @@ func TestPortfolio_RemoveAsset(t *testing.T) {
 		}
 		require.Error(t, pf.RemoveAsset(-1))
 	})
-}
-
-type ErrorAlg struct{}
-
-func (ErrorAlg) Name() string { return "" }
-
-func (ErrorAlg) PolicyWeights(ctx context.Context, today time.Time, assets returns.Table, currentWeights []float64) ([]float64, error) {
-	return nil, fmt.Errorf("lemon")
 }
