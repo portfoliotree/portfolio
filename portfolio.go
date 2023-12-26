@@ -139,12 +139,12 @@ func (pf *Specification) BacktestWithStartAndEndTime(ctx context.Context, start,
 }
 
 type Policy struct {
-	RebalancingInterval backtestconfig.Interval `yaml:"rebalancing_interval,omitempty"`
+	RebalancingInterval backtestconfig.Interval `yaml:"rebalancing_interval,omitempty"                    bson:"rebalancing_interval"`
 
-	Weights                  []float64               `yaml:"weights,omitempty"`
-	WeightsAlgorithm         string                  `yaml:"weights_algorithm,omitempty"`
-	WeightsAlgorithmLookBack backtestconfig.Window   `yaml:"weights_algorithm_look_back_window,omitempty"`
-	WeightsUpdatingInterval  backtestconfig.Interval `yaml:"weights_updating_interval,omitempty"`
+	Weights                  []float64               `yaml:"weights,omitempty"                            bson:"weights"`
+	WeightsAlgorithm         string                  `yaml:"weights_algorithm,omitempty"                  bson:"weights_algorithm"`
+	WeightsAlgorithmLookBack backtestconfig.Window   `yaml:"weights_algorithm_look_back_window,omitempty" bson:"weights_algorithm_look_back_window"`
+	WeightsUpdatingInterval  backtestconfig.Interval `yaml:"weights_updating_interval,omitempty"          bson:"weights_updating_interval"`
 }
 
 // Validate does some simple validations.
