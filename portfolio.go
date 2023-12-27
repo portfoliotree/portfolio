@@ -25,6 +25,16 @@ type Document struct {
 	Type     string        `json:"type"     yaml:"type"     bson:"type"`
 	Metadata Metadata      `json:"metadata" yaml:"metadata" bson:"metadata"`
 	Spec     Specification `json:"spec"     yaml:"spec"     bson:"spec"`
+
+	Filepath  string `json:"filepath,omitempty" yaml:"-" bson:"filepath,omitempty"`
+	FileIndex int    `json:"index,omitempty"    yaml:"-" bson:"index,omitempty"`
+}
+
+func (d Document) Validate() error {
+	if d.Type != portfolioTypeName {
+		return fmt.Errorf("incorrect specification type got %q but expected %q", d.Type, portfolioTypeName)
+	}
+	return d.Spec.Validate()
 }
 
 type Metadata struct {
@@ -37,69 +47,53 @@ type Metadata struct {
 
 // Specification models a portfolio.
 type Specification struct {
-	Name      string      `yaml:"name"`
-	Benchmark Component   `yaml:"benchmark"`
-	Assets    []Component `yaml:"assets"`
-	Policy    Policy      `yaml:"policy"`
-
-	Filepath  string `yaml:"-"`
-	FileIndex int    `yaml:"-"`
+	Assets []Component `yaml:"assets"`
+	Policy Policy      `yaml:"policy"`
 }
 
-// typedSpecificationFile may be exported some day.
-// For now, it provides a bit of indirection for specs and files.
-type typedSpecificationFile[S interface {
-	Specification
-}] struct {
-	ID   string `yaml:"id"`
-	Type string `yaml:"type"`
-	Spec S      `yaml:"spec"`
-}
-
-// ParseOneSpecification decodes the contents of in to a Specification
+// ParseOneDocument decodes the contents of in to a Specification
 // It supports a string containing YAML.
 // The resulting Specification may have default values for unset fields.
-func ParseOneSpecification(in string) (Specification, error) {
-	result, err := ParseSpecifications(strings.NewReader(in))
+func ParseOneDocument(in string) (Document, error) {
+	result, err := ParseDocuments(strings.NewReader(in))
 	if err != nil {
-		return Specification{}, err
+		return Document{}, err
 	}
 	if len(result) != 1 {
-		return Specification{}, fmt.Errorf("expected input to have exactly one portfolio especified")
+		return Document{}, fmt.Errorf("expected input to have exactly one portfolio especified")
 	}
 	return result[0], nil
 }
 
 const portfolioTypeName = "Portfolio"
 
-// ParseSpecifications decodes the contents of in to a list of Specifications
+// ParseDocuments decodes the contents of in to a list of Specifications
 // The resulting Specification may have default values for unset fields.
-func ParseSpecifications(r io.Reader) ([]Specification, error) {
+func ParseDocuments(r io.Reader) ([]Document, error) {
 	dec := yaml.NewDecoder(r)
 	dec.KnownFields(true)
-	var result []Specification
+	var result []Document
 	for {
-		var spec typedSpecificationFile[Specification]
-		if err := dec.Decode(&spec); err != nil {
+		var document Document
+		if err := dec.Decode(&document); err != nil {
 			if err == io.EOF {
 				return result, nil
 			}
 			return result, err
 		}
-		switch spec.Type {
+		switch document.Type {
 		case portfolioTypeName:
 		default:
-			return result, fmt.Errorf("incorrect specification type got %q but expected %q", spec.Type, portfolioTypeName)
+			return result, fmt.Errorf("incorrect specification type got %q but expected %q", document.Type, portfolioTypeName)
 		}
 
-		pf := spec.Spec
-		pf.setDefaultPolicyWeightAlgorithm()
-		if pf.Policy.WeightsAlgorithm == allocation.ConstantWeightsAlgorithmName {
-			if len(pf.Policy.Weights) != len(pf.Assets) {
-				return result, errAssetAndWeightsLenMismatch(&spec.Spec)
+		document.Spec.setDefaultPolicyWeightAlgorithm()
+		if document.Spec.Policy.WeightsAlgorithm == allocation.ConstantWeightsAlgorithmName {
+			if len(document.Spec.Policy.Weights) != len(document.Spec.Assets) {
+				return result, errAssetAndWeightsLenMismatch(&document.Spec)
 			}
 		}
-		result = append(result, pf)
+		result = append(result, document)
 	}
 }
 
@@ -153,11 +147,6 @@ func (pf *Specification) Validate() error {
 	var list []error
 	for _, asset := range pf.Assets {
 		list = append(list, asset.Validate())
-	}
-	if pf.Benchmark.ID != "" {
-		if err := pf.Benchmark.Validate(); err != nil {
-			list = append(list, err)
-		}
 	}
 	return errors.Join(list...)
 }

@@ -57,12 +57,13 @@ func writeJSONResponse(res http.ResponseWriter, data any) {
 
 func ExampleParse() {
 	// language=yaml
-	const specYAML = `
+	specYAML := `
 ---
 type: Portfolio
-spec:
+metadata:
   name: 60/40
   benchmark: BIGPX
+spec:
   assets: [ACWI, AGG]
   policy:
     weights: [60, 40]
@@ -70,12 +71,12 @@ spec:
     rebalancing_interval: Quarterly
 `
 
-	pf, err := portfolio.ParseOneSpecification(specYAML)
+	pf, err := portfolio.ParseOneDocument(specYAML)
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println("Name:", pf.Name)
-	fmt.Println("Alg:", pf.Policy.WeightsAlgorithm)
+	fmt.Println("Name:", pf.Metadata.Name)
+	fmt.Println("Alg:", pf.Spec.Policy.WeightsAlgorithm)
 
 	// Output:
 	// Name: 60/40
@@ -88,8 +89,8 @@ func ExampleOpen() {
 		panic(err)
 	}
 	pf := portfolios[0]
-	fmt.Println("Name:", pf.Name)
-	fmt.Println("Alg:", pf.Policy.WeightsAlgorithm)
+	fmt.Println("Name:", pf.Metadata.Name)
+	fmt.Println("Alg:", pf.Spec.Policy.WeightsAlgorithm)
 
 	// Output:
 	// Name: 60/40
@@ -144,12 +145,12 @@ func TestParse(t *testing.T) {
 		{
 			Name: "component kind is not correct",
 			// language=yaml
-			SpecYAML:            `{type: Portfolio, spec: {benchmark: []}}`,
+			SpecYAML:            `{type: Portfolio, metadata: {benchmark: []}}`,
 			ErrorStringContains: "wrong YAML type:",
 		},
 	} {
 		t.Run(tt.Name, func(t *testing.T) {
-			p, err := portfolio.ParseOneSpecification(tt.SpecYAML)
+			p, err := portfolio.ParseOneDocument(tt.SpecYAML)
 			if tt.ErrorStringContains == "" {
 				assert.NoError(t, err)
 				assert.Equal(t, tt.Portfolio, p)
@@ -162,11 +163,12 @@ func TestParse(t *testing.T) {
 
 func ExampleSpecification_Backtest() {
 	// language=yaml
-	const portfolioSpecYAML = `---
+	portfolioSpecYAML := `---
 type: Portfolio
-spec:
+metadata:
   name: 60/40
   benchmark: BIGPX
+spec:
   assets: [ACWI, AGG]
   policy:
     weights: [60, 40]
@@ -174,17 +176,17 @@ spec:
     rebalancing_interval: Quarterly
 `
 
-	pf, err := portfolio.ParseOneSpecification(portfolioSpecYAML)
+	pf, err := portfolio.ParseOneDocument(portfolioSpecYAML)
 	if err != nil {
 		panic(err)
 	}
 
 	ctx := context.Background()
-	assets, err := pf.AssetReturns(ctx)
+	assets, err := pf.Spec.AssetReturns(ctx)
 	if err != nil {
 		panic(err)
 	}
-	result, err := pf.Backtest(ctx, assets, nil)
+	result, err := pf.Spec.Backtest(ctx, assets, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -261,23 +263,29 @@ func TestPortfolio_Backtest_custom_function(t *testing.T) {
 func Test_Portfolio_Validate(t *testing.T) {
 	for _, tt := range []struct {
 		Name      string
-		Portfolio portfolio.Specification
+		Portfolio portfolio.Document
 		ExpectErr bool
 	}{
 		{
-			Name: "okay", Portfolio: portfolio.Specification{}, ExpectErr: false,
+			Name: "okay", Portfolio: portfolio.Document{
+				Type: "Portfolio",
+			}, ExpectErr: false,
 		},
 		{
 			Name: "bad asset",
-			Portfolio: portfolio.Specification{
-				Assets: []portfolio.Component{{ID: "_"}},
+			Portfolio: portfolio.Document{
+				Spec: portfolio.Specification{
+					Assets: []portfolio.Component{{ID: "_"}},
+				},
 			},
 			ExpectErr: true,
 		},
 		{
 			Name: "benchmark",
-			Portfolio: portfolio.Specification{
-				Benchmark: portfolio.Component{ID: "()"},
+			Portfolio: portfolio.Document{
+				Metadata: portfolio.Metadata{
+					Benchmark: portfolio.Component{ID: "()"},
+				},
 			},
 			ExpectErr: true,
 		},

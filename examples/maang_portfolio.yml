@@ -1,7 +1,9 @@
 ---
 type: Portfolio
-spec:
+metadata:
   name: MAANG
+  benchmark: SPY
+spec:
   assets:
   - {id: META}
   - AMZN
@@ -10,4 +12,3 @@ spec:
   - GOOG
   policy:
     rebalancing_interval: Quarterly
-  benchmark: SPY

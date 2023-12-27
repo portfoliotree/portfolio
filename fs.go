@@ -11,7 +11,7 @@ import (
 
 // ParseSpecificationFile opens a file and parses the contents into a Specification
 // It supports YAML files at the moment but may support other encodings in the future.
-func ParseSpecificationFile(specificationFilePath string) ([]Specification, error) {
+func ParseSpecificationFile(specificationFilePath string) ([]Document, error) {
 	if err := checkPortfolioFileName(specificationFilePath); err != nil {
 		return nil, err
 	}
@@ -33,8 +33,8 @@ func checkPortfolioFileName(fileName string) error {
 	}
 }
 
-func portfoliosFromFile(fileName string, file fs.File) ([]Specification, error) {
-	result, err := ParseSpecifications(file)
+func portfoliosFromFile(fileName string, file fs.File) ([]Document, error) {
+	result, err := ParseDocuments(file)
 	if err != nil {
 		return result, err
 	}
@@ -45,8 +45,8 @@ func portfoliosFromFile(fileName string, file fs.File) ([]Specification, error) 
 	return result, nil
 }
 
-func WalkDirectoryAndParseSpecificationFiles(dir fs.FS) ([]Specification, error) {
-	var result []Specification
+func WalkDirectoryAndParseSpecificationFiles(dir fs.FS) ([]Document, error) {
+	var result []Document
 	return result, fs.WalkDir(dir, ".", func(filePath string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err

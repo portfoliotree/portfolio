@@ -22,23 +22,28 @@ func TestParseSpecificationFile(t *testing.T) {
 		Name                string
 		FilePath            string
 		ErrorStringContains string
-		Portfolios          []portfolio.Specification
+		Portfolios          []portfolio.Document
 	}{
 		{
 			Name:     "asset ids with policy weights",
 			FilePath: filepath.Join("examples", "60-40_portfolio.yml"),
-			Portfolios: []portfolio.Specification{
+			Portfolios: []portfolio.Document{
 				{
-					Name:      "60/40",
-					Benchmark: portfolio.Component{ID: "BIGPX"},
-					Assets: []portfolio.Component{
-						{ID: "ACWI"},
-						{ID: "AGG"},
+					Type: "Portfolio",
+					Metadata: portfolio.Metadata{
+						Name:      "60/40",
+						Benchmark: portfolio.Component{ID: "BIGPX"},
 					},
-					Policy: portfolio.Policy{
-						Weights:             []float64{60, 40},
-						WeightsAlgorithm:    allocation.ConstantWeightsAlgorithmName,
-						RebalancingInterval: "Quarterly",
+					Spec: portfolio.Specification{
+						Assets: []portfolio.Component{
+							{ID: "ACWI"},
+							{ID: "AGG"},
+						},
+						Policy: portfolio.Policy{
+							Weights:             []float64{60, 40},
+							WeightsAlgorithm:    allocation.ConstantWeightsAlgorithmName,
+							RebalancingInterval: "Quarterly",
+						},
 					},
 					Filepath: "examples/60-40_portfolio.yml",
 				},
@@ -47,20 +52,25 @@ func TestParseSpecificationFile(t *testing.T) {
 		{
 			Name:     "mixed asset spec node type and weight algorithm",
 			FilePath: filepath.Join("examples", "maang_portfolio.yml"),
-			Portfolios: []portfolio.Specification{
+			Portfolios: []portfolio.Document{
 				{
-					Name:      "MAANG",
-					Benchmark: portfolio.Component{ID: "SPY"},
-					Assets: []portfolio.Component{
-						{ID: "META"},
-						{ID: "AMZN"},
-						{ID: "AAPL"},
-						{ID: "NFLX"},
-						{ID: "GOOG"},
+					Type: "Portfolio",
+					Metadata: portfolio.Metadata{
+						Name:      "MAANG",
+						Benchmark: portfolio.Component{ID: "SPY"},
 					},
-					Policy: portfolio.Policy{
-						RebalancingInterval: "Quarterly",
-						WeightsAlgorithm:    allocation.EqualWeightsAlgorithmName,
+					Spec: portfolio.Specification{
+						Assets: []portfolio.Component{
+							{ID: "META"},
+							{ID: "AMZN"},
+							{ID: "AAPL"},
+							{ID: "NFLX"},
+							{ID: "GOOG"},
+						},
+						Policy: portfolio.Policy{
+							RebalancingInterval: "Quarterly",
+							WeightsAlgorithm:    allocation.EqualWeightsAlgorithmName,
+						},
 					},
 					Filepath: "examples/maang_portfolio.yml",
 				},
