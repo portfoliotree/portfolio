@@ -1,7 +1,7 @@
 package allocation
 
 import (
-	"golang.org/x/exp/slices"
+	"slices"
 
 	"github.com/portfoliotree/portfolio/backtest"
 )

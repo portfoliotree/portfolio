@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"time"
 
-	"golang.org/x/exp/slices"
 	"gonum.org/v1/gonum/floats"
 
 	"github.com/portfoliotree/portfolio/returns"
