@@ -3,7 +3,7 @@ module github.com/portfoliotree/portfolio
 go 1.21
 
 require (
-	github.com/portfoliotree/round v0.0.0-20230629094931-8afd986aa2f1
+	github.com/portfoliotree/round v0.1.0
 	github.com/stretchr/testify v1.8.4
 	go.mongodb.org/mongo-driver v1.13.1
 	gonum.org/v1/gonum v0.14.0
