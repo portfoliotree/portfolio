@@ -119,3 +119,39 @@ func Annually() func(t time.Time, _ []float64) bool {
 		return monthly(current, nil) && current.Month() == time.January
 	}
 }
+
+func (t Interval) StartDate(now time.Time) time.Time {
+	switch t {
+	case IntervalWeekly:
+		wd := now.Weekday()
+		return now.AddDate(0, 0, -int(wd)+1)
+	case IntervalMonthly:
+		y, m, _ := now.Date()
+		return time.Date(y, m, 1, 0, 0, 0, 0, now.Location())
+	case IntervalQuarterly:
+		y, m, _ := now.Date()
+		m = quarterMonth(m)
+		return time.Date(y, m, 1, 0, 0, 0, 0, now.Location())
+	case IntervalAnnually:
+		return time.Date(now.Year(), 1, 1, 0, 0, 0, 0, now.Location())
+	case IntervalNever, IntervalDaily, "":
+		fallthrough
+	default:
+		return now
+	}
+}
+
+func quarterMonth(m time.Month) time.Month {
+	switch m {
+	case time.January, time.February, time.March:
+		fallthrough
+	default:
+		return time.January
+	case time.April, time.May, time.June:
+		return time.April
+	case time.July, time.August, time.September:
+		return time.July
+	case time.October, time.November, time.December:
+		return time.October
+	}
+}

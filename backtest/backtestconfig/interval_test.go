@@ -125,3 +125,96 @@ func date(str string) time.Time {
 	d, _ := time.Parse(time.DateOnly, str)
 	return d
 }
+
+func TestInterval_StartDate(t *testing.T) {
+	for _, tt := range []struct {
+		Name     string
+		Interval backtestconfig.Interval
+		Expected time.Time
+		Now      time.Time
+	}{
+		{
+			Name:     "never gives the same date",
+			Interval: backtestconfig.IntervalNever,
+			Expected: date("2020-03-01"),
+			Now:      date("2020-03-01"),
+		},
+		{
+			Name:     "daily gives the same day",
+			Interval: backtestconfig.IntervalDaily,
+			Expected: date("2020-03-01"),
+			Now:      date("2020-03-01"),
+		},
+		{
+			Name:     "weekly gives the most recent monday",
+			Interval: backtestconfig.IntervalWeekly,
+			Expected: date("2024-01-01"),
+			Now:      date("2024-01-03"),
+		},
+		{
+			Name:     "monthly gives the 1st of a month",
+			Interval: backtestconfig.IntervalMonthly,
+			Expected: date("2024-02-01"),
+			Now:      date("2024-02-07"),
+		},
+		{
+			Name:     "q1 gives the most recent 1st quarter day",
+			Interval: backtestconfig.IntervalQuarterly,
+			Expected: date("2024-01-01"),
+			Now:      date("2024-02-23"),
+		},
+		{
+			Name:     "q2 gives the most recent 1st quarter day",
+			Interval: backtestconfig.IntervalQuarterly,
+			Expected: date("2024-04-01"),
+			Now:      date("2024-05-23"),
+		},
+		{
+			Name:     "q3 gives the most recent 1st quarter day",
+			Interval: backtestconfig.IntervalQuarterly,
+			Expected: date("2024-07-01"),
+			Now:      date("2024-09-23"),
+		},
+		{
+			Name:     "q4 gives the most recent 1st quarter day",
+			Interval: backtestconfig.IntervalQuarterly,
+			Expected: date("2024-10-01"),
+			Now:      date("2024-12-03"),
+		},
+		{
+			Name:     "weekly gives the most recent monday",
+			Interval: backtestconfig.IntervalAnnually,
+			Expected: date("2024-01-01"),
+			Now:      date("2024-04-23"),
+		},
+		{
+			Name:     "weekly on monday gives the same day",
+			Interval: backtestconfig.IntervalWeekly,
+			Expected: date("2024-01-01"),
+			Now:      date("2024-01-01"),
+		},
+		{
+			Name:     "monthly on the first gives the same day",
+			Interval: backtestconfig.IntervalMonthly,
+			Expected: date("2024-01-01"),
+			Now:      date("2024-01-01"),
+		},
+		{
+			Name:     "monthly on the first gives the same day",
+			Interval: backtestconfig.IntervalQuarterly,
+			Expected: date("2024-01-01"),
+			Now:      date("2024-01-01"),
+		},
+		{
+			Name:     "annually on jan 1st gives the same day",
+			Interval: backtestconfig.IntervalAnnually,
+			Expected: date("2024-01-01"),
+			Now:      date("2024-01-01"),
+		},
+	} {
+		t.Run(tt.Name, func(t *testing.T) {
+			out := tt.Interval.StartDate(tt.Now)
+			assert.Equal(t, tt.Expected, out)
+		})
+	}
+}
