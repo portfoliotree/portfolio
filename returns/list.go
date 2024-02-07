@@ -1,6 +1,8 @@
 package returns
 
 import (
+	"math"
+	"slices"
 	"sort"
 	"time"
 
@@ -14,6 +16,15 @@ func (list List) Sort()              { sort.Sort(list) }
 func (list List) Less(i, j int) bool { return list[i].Time.After(list[j].Time) }
 func (list List) Len() int           { return len(list) }
 func (list List) Swap(i, j int)      { list[i], list[j] = list[j], list[i] }
+
+func (list List) AddSpread(annualizedSpread float64) List {
+	result := slices.Clone(list)
+	s := math.Pow(1.0+annualizedSpread, 1.0/calculations.PeriodsPerYear) - 1
+	for i := range result {
+		result[i].Value = result[i].Value + s
+	}
+	return result
+}
 
 func (list List) First() Return        { return indexOrEmpty(list, firstIndex(list)) }
 func (list List) Last() Return         { return indexOrEmpty(list, lastIndex(list)) }

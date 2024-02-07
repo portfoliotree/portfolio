@@ -24,6 +24,23 @@ func TestList_Returns(t *testing.T) {
 	})
 }
 
+func TestList_AddSpread(t *testing.T) {
+	list := returns.List{
+		returns.New(fixtures.T(t, fixtures.Day0), .001),
+		returns.New(fixtures.T(t, fixtures.Day1), .002),
+		returns.New(fixtures.T(t, fixtures.Day2), -.001),
+		returns.New(fixtures.T(t, fixtures.Day3), .003),
+	}
+	rs := list.AddSpread(0.01)
+	vs := rs.Values()
+	if err := round.Recursive(vs, 6); err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, vs, []float64{
+		0.001039, 0.002039, -0.000961, 0.003039,
+	})
+}
+
 func TestList_Value(t *testing.T) {
 	d := fixtures.T(t, "2021-12-31")
 
