@@ -5,7 +5,7 @@ go 1.21
 require (
 	github.com/portfoliotree/round v0.1.0
 	github.com/stretchr/testify v1.8.4
-	go.mongodb.org/mongo-driver v1.13.1
+	go.mongodb.org/mongo-driver v1.14.0
 	gonum.org/v1/gonum v0.14.0
 	gopkg.in/yaml.v3 v3.0.1
 )
