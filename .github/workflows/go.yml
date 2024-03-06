@@ -3,28 +3,28 @@
 
 name: Continuous Integration
 on:
-    push:
-        branches: ["main"]
-        paths-ignore:
-            - 'README.md'
-    pull_request:
-        paths-ignore:
-            - 'README.md'
+  push:
+    branches: ["main"]
+    paths-ignore:
+      - 'README.md'
+  pull_request:
+    paths-ignore:
+      - 'README.md'
 jobs:
-    build_and_test:
-        name: Build and Test
-        strategy:
-            matrix:
-                os: [ubuntu-latest, windows-latest]
-        runs-on: ${{ matrix.os }}
-        steps:
-            - uses: actions/checkout@v3
-            - name: Set up Go
-              uses: actions/setup-go@v4
-              with:
-                go-version: '>=1.21'
-                check-latest: true
-            - name: Build
-              run: go build -v ./...
-            - name: Test
-              run: go test -v ./...
+  build_and_test:
+    name: Build and Test
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '>=1.21'
+          check-latest: true
+      - name: Build
+        run: go build -v ./...
+      - name: Test
+        run: go test -v ./...
