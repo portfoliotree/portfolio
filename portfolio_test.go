@@ -2,11 +2,7 @@ package portfolio_test
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"net/http"
-	"net/http/httptest"
-	"os"
 	"path/filepath"
 	"testing"
 	"time"
@@ -15,45 +11,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/portfoliotree/portfolio"
-	"github.com/portfoliotree/portfolio/portfoliotest"
 	"github.com/portfoliotree/portfolio/returns"
 )
-
-func TestMain(m *testing.M) {
-	server := httptest.NewServer(testdataAssetReturns(portfoliotest.ComponentReturnsProvider()))
-	http.DefaultClient = server.Client()
-	_ = os.Setenv(portfolio.ServerURLEnvironmentVariableName, server.URL)
-	os.Exit(func() int {
-		defer server.Close()
-		return m.Run()
-	}())
-}
-
-func testdataAssetReturns(crp portfolio.ComponentReturnsProvider) http.HandlerFunc {
-	return func(res http.ResponseWriter, req *http.Request) {
-		assets, err := portfolio.ParseComponentsFromURL(req.URL.Query(), "asset")
-		if err != nil {
-			http.Error(res, err.Error(), http.StatusBadRequest)
-			return
-		}
-		table, err := crp.ComponentReturnsTable(req.Context(), assets...)
-		if err != nil {
-			http.Error(res, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		writeJSONResponse(res, table)
-	}
-}
-
-func writeJSONResponse(res http.ResponseWriter, data any) {
-	buf, err := json.Marshal(data)
-	if err != nil {
-		http.Error(res, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	res.WriteHeader(http.StatusOK)
-	_, _ = res.Write(buf)
-}
 
 func ExampleParse() {
 	// language=yaml

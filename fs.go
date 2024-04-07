@@ -19,7 +19,7 @@ func ParseSpecificationFile(specificationFilePath string) ([]Document, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer closeAndIgnoreErrors(f)
+	defer closeAndIgnoreError(f)
 	return portfoliosFromFile(specificationFilePath, f)
 }
 
@@ -64,7 +64,7 @@ func WalkDirectoryAndParseSpecificationFiles(dir fs.FS) ([]Document, error) {
 		if err != nil {
 			return err
 		}
-		defer closeAndIgnoreErrors(f)
+		defer closeAndIgnoreError(f)
 		specs, err := portfoliosFromFile(filePath, f)
 		if err != nil {
 			return err

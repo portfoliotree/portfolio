@@ -82,7 +82,7 @@ func doJSONRequest[T any](do func(r *http.Request) (*http.Response, error), req 
 	if err != nil {
 		return result, err
 	}
-	defer closeAndIgnoreErrors(res.Body)
+	defer closeAndIgnoreError(res.Body)
 	switch res.StatusCode {
 	case http.StatusOK, http.StatusCreated:
 	default:
@@ -106,7 +106,7 @@ func doJSONRequest[T any](do func(r *http.Request) (*http.Response, error), req 
 	return result, nil
 }
 
-func closeAndIgnoreErrors(closer io.Closer) {
+func closeAndIgnoreError(closer io.Closer) {
 	_ = closer.Close()
 }
 
