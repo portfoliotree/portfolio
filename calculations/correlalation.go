@@ -13,11 +13,11 @@ func CorrelationMatrix(values [][]float64) *mat.Dense {
 	}
 	m := mat.NewDense(len(values), len(values), nil)
 	mp := make(map[int][]float64, len(values))
-	min := math.MaxInt
+	minimum := math.MaxInt
 	for i := range values {
 		mp[i] = values[i]
-		if len(mp[i]) < min {
-			min = len(mp[i])
+		if len(mp[i]) < minimum {
+			minimum = len(mp[i])
 		}
 	}
 	for i := 0; i < len(values); i++ {
@@ -27,7 +27,7 @@ func CorrelationMatrix(values [][]float64) *mat.Dense {
 				continue
 			}
 			vi, vj := mp[i], mp[j]
-			c := stat.Correlation(vi[:min], vj[:min], nil)
+			c := stat.Correlation(vi[:minimum], vj[:minimum], nil)
 			m.Set(i, j, c)
 			m.Set(j, i, c)
 		}

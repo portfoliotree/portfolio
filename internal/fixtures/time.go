@@ -46,10 +46,3 @@ func EveryFriday[V any](t *testing.T, list []V, set func(v V, t time.Time) V) []
 	}
 	return list
 }
-
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
-}
