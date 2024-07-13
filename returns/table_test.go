@@ -321,7 +321,7 @@ AddColumn now does not add a column to the table if the table does not already h
 func TestTable_CorrelationMatrix(t *testing.T) {
 	t.Run("empty", func(t *testing.T) {
 		tab := returns.NewTable(nil)
-		assert.Len(t, tab.CorrelationMatrixValues(), 0)
+		assert.Len(t, tab.CorrelationMatrix(), 0)
 	})
 	returnsFromQuotes := func(quotes ...float64) []float64 {
 		if len(quotes) < 2 {
@@ -340,7 +340,7 @@ func TestTable_CorrelationMatrix(t *testing.T) {
 			{rtn(t, fixtures.Day2, rs1[2]), rtn(t, fixtures.Day1, rs1[1]), rtn(t, fixtures.Day0, rs1[0])},
 			{rtn(t, fixtures.Day2, rs2[2]), rtn(t, fixtures.Day1, rs2[1]), rtn(t, fixtures.Day0, rs2[0])},
 		})
-		assert.Equal(t, table.CorrelationMatrixValues(), [][]float64{
+		assert.Equal(t, table.CorrelationMatrix(), [][]float64{
 			{1, 1},
 			{1, 1},
 		})
@@ -352,7 +352,7 @@ func TestTable_CorrelationMatrix(t *testing.T) {
 			{rtn(t, fixtures.Day2, rs1[2]), rtn(t, fixtures.Day1, rs1[1]), rtn(t, fixtures.Day0, rs1[0])},
 			{rtn(t, fixtures.Day2, rs2[2]), rtn(t, fixtures.Day1, rs2[1]), rtn(t, fixtures.Day0, rs2[0])},
 		})
-		assert.Equal(t, table.CorrelationMatrixValues(), [][]float64{
+		assert.Equal(t, table.CorrelationMatrix(), [][]float64{
 			{1, -1},
 			{-1, 1},
 		})
