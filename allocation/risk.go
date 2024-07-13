@@ -36,7 +36,7 @@ func (*EqualRiskContribution) PolicyWeights(ctx context.Context, _ time.Time, as
 	copy(weights, ws)
 
 	return weights, optWeights(ctx, weights, func(ws []float64) float64 {
-		_, _, riskWeights := calculations.RiskFromRiskContribution(assetRisks, ws, cm)
+		riskWeights := calculations.RiskWeights(calculations.PortfolioVolatility(assetRisks, ws, cm))
 		var diff float64
 		for i := range riskWeights {
 			diff += math.Abs(target - riskWeights[i])

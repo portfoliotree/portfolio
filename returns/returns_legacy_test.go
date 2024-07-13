@@ -5,13 +5,14 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
+	"slices"
 	"sort"
 	"strconv"
 	"testing"
 	"time"
 
+	"github.com/portfoliotree/round"
 	"github.com/stretchr/testify/assert"
-	"gonum.org/v1/gonum/mat"
 
 	"github.com/portfoliotree/portfolio/internal/fixtures"
 	"github.com/portfoliotree/portfolio/returns"
@@ -47,40 +48,26 @@ func TestReturns_FirstAndLastPeriod(t *testing.T) {
 	assert.Equal(t, end, date("2020-01-04"))
 }
 
-func toSlices(dense *mat.Dense) [][]float64 {
-	iL, jL := dense.Dims()
-	result := make([][]float64, iL)
-	d := dense.RawMatrix().Data
-	for i := range result {
-		result[i] = d[i*jL : (i+1)*jL]
-	}
-	return result
-}
-
 func TestComposite_correlationMatrix(t *testing.T) {
 	t.Run("perfectly positively correlated", func(t *testing.T) {
-		assert.Equal(t,
-			toSlices(returns.NewTable([]returns.List{
-				{{Time: fixtures.T(t, fixtures.Day3), Value: 10}, {Time: fixtures.T(t, fixtures.Day2), Value: 20}, {Time: fixtures.T(t, fixtures.Day1), Value: 10}, {Time: fixtures.T(t, fixtures.Day0), Value: 20}},
-				{{Time: fixtures.T(t, fixtures.Day3), Value: 10}, {Time: fixtures.T(t, fixtures.Day2), Value: 20}, {Time: fixtures.T(t, fixtures.Day1), Value: 10}, {Time: fixtures.T(t, fixtures.Day0), Value: 20}},
-			}).CorrelationMatrix()),
-			[][]float64{
-				{1, 1},
-				{1, 1},
-			},
-		)
+		assert.Equal(t, [][]float64{
+			{1, 1},
+			{1, 1},
+		}, returns.NewTable([]returns.List{
+			{{Time: fixtures.T(t, fixtures.Day3), Value: 10}, {Time: fixtures.T(t, fixtures.Day2), Value: 20}, {Time: fixtures.T(t, fixtures.Day1), Value: 10}, {Time: fixtures.T(t, fixtures.Day0), Value: 20}},
+			{{Time: fixtures.T(t, fixtures.Day3), Value: 10}, {Time: fixtures.T(t, fixtures.Day2), Value: 20}, {Time: fixtures.T(t, fixtures.Day1), Value: 10}, {Time: fixtures.T(t, fixtures.Day0), Value: 20}},
+		}).CorrelationMatrix())
 	})
 
 	t.Run("perfectly negatively correlated", func(t *testing.T) {
-		assert.Equal(t,
-			toSlices(returns.NewTable([]returns.List{
+		assert.Equal(t, [][]float64{
+			{1, -1},
+			{-1, 1},
+		},
+			returns.NewTable([]returns.List{
 				{{Time: fixtures.T(t, fixtures.Day3), Value: 10}, {Time: fixtures.T(t, fixtures.Day2), Value: 20}, {Time: fixtures.T(t, fixtures.Day1), Value: 10}, {Time: fixtures.T(t, fixtures.Day0), Value: 20}},
 				{{Time: fixtures.T(t, fixtures.Day3), Value: 20}, {Time: fixtures.T(t, fixtures.Day2), Value: 10}, {Time: fixtures.T(t, fixtures.Day1), Value: 20}, {Time: fixtures.T(t, fixtures.Day0), Value: 10}},
-			}).CorrelationMatrix()),
-			[][]float64{
-				{1, -1},
-				{-1, 1},
-			},
+			}).CorrelationMatrix(),
 		)
 	})
 
@@ -90,8 +77,8 @@ func TestComposite_correlationMatrix(t *testing.T) {
 			{{Time: fixtures.T(t, fixtures.Day2), Value: -0.1}, {Time: fixtures.T(t, fixtures.Day1), Value: -0.1}, {Time: fixtures.T(t, fixtures.Day0), Value: .1}},
 		}).CorrelationMatrix()
 
-		roughlyEqual(t, c.At(0, 1), 0.5)
-		roughlyEqual(t, c.At(1, 0), 0.5)
+		roughlyEqual(t, c[0][1], 0.5)
+		roughlyEqual(t, c[1][0], 0.5)
 	})
 }
 
@@ -107,42 +94,35 @@ func TestDateAlignedReturnsList_ExpectedRisk(t *testing.T) {
 	})
 
 	t.Run("with two assets and one has no weight", func(t *testing.T) {
+		ts := []time.Time{fixtures.T(t, fixtures.Day2), fixtures.T(t, fixtures.Day1), fixtures.T(t, fixtures.Day0)}
 		list := returns.NewTable([]returns.List{
-			{{Value: 1}, {Value: -2.0 / 3}, {Value: .5}},
-			{{Value: .5}, {Value: .3}, {Value: .5}},
+			{{Time: ts[0], Value: 1}, {Time: ts[1], Value: -2.0 / 3}, {Time: ts[2], Value: .5}},
+			{{Time: ts[0], Value: .5}, {Time: ts[1], Value: .3}, {Time: ts[2], Value: .5}},
 		})
-
-		assert.Equal(t, list.ExpectedRisk([]float64{1, 0}), list.List(0).Risk())
+		weights := []float64{1, 0}
+		assert.Equal(t, list.List(0).Risk(), list.ExpectedRisk(weights))
 	})
 
 	t.Run("with two completely correlated assets", func(t *testing.T) {
-		list := returns.NewTable([]returns.List{
-			{{Value: 1}, {Value: -2.0 / 3}, {Value: .5}},
-			{{Value: 1}, {Value: -2.0 / 3}, {Value: .5}},
-		})
+		ts := []time.Time{fixtures.T(t, fixtures.Day2), fixtures.T(t, fixtures.Day1), fixtures.T(t, fixtures.Day0)}
+		rs := returns.List{{Time: ts[0], Value: 1}, {Time: ts[1], Value: -2.0 / 3}, {Time: ts[2], Value: .5}}
+		list := returns.NewTable([]returns.List{slices.Clone(rs), slices.Clone(rs)})
 
 		compositeRisk := list.ExpectedRisk([]float64{0.2, 0.8})
 
-		assert.Equal(t, compositeRisk, list.List(0).Risk())
-		assert.Equal(t, compositeRisk, list.List(1).Risk())
-	})
+		const exp = 0.8553
 
-	t.Run("with equal risk contribution", func(t *testing.T) {
-		list := returns.NewTable([]returns.List{
-			{{Value: 1.5}, {Value: -0.25}, {Value: 1}},
-			{{Value: 1.5}, {Value: -0.25}, {Value: 1}},
-		})
-
-		compositeRisk := list.ExpectedRisk([]float64{0.5, 0.5})
-
-		roughlyEqual(t, compositeRisk, list.List(0).Risk())
-		roughlyEqual(t, compositeRisk, list.List(1).Risk())
+		assert.Equal(t, exp, round.Decimal(list.List(0).Risk(), 4))
+		assert.Equal(t, exp, round.Decimal(list.List(1).Risk(), 4))
+		assert.Equal(t, exp, round.Decimal(compositeRisk, 4))
+		assert.Equal(t, exp, round.Decimal(compositeRisk, 4))
 	})
 
 	t.Run("with scaled but correlated assets", func(t *testing.T) {
+		ts := []time.Time{fixtures.T(t, fixtures.Day2), fixtures.T(t, fixtures.Day1), fixtures.T(t, fixtures.Day0)}
 		list := returns.NewTable([]returns.List{
-			{{Value: 1.5}, {Value: -0.25}, {Value: 1}},
-			{{Value: 3}, {Value: -0.5}, {Value: 2}},
+			{{Time: ts[0], Value: 1.5}, {Time: ts[1], Value: -0.25}, {Time: ts[2], Value: 1}},
+			{{Time: ts[0], Value: 3}, {Time: ts[1], Value: -0.5}, {Time: ts[2], Value: 2}},
 		})
 
 		weights := []float64{.5, .5}

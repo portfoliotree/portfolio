@@ -13,8 +13,6 @@ import (
 
 	"go.mongodb.org/mongo-driver/bson"
 
-	"gonum.org/v1/gonum/mat"
-
 	"github.com/portfoliotree/round"
 
 	"github.com/portfoliotree/portfolio/calculations"
@@ -258,17 +256,13 @@ func (table Table) Lists() []List {
 	return result
 }
 
-func (table Table) CorrelationMatrix() *mat.Dense {
+func (table Table) CorrelationMatrix() [][]float64 {
 	return calculations.CorrelationMatrix(table.values)
-}
-
-func (table Table) CorrelationMatrixValues() [][]float64 {
-	return calculations.DenseToSlices(table.CorrelationMatrix())
 }
 
 func (table Table) ExpectedRisk(weights []float64) float64 {
 	risks := table.RisksFromStdDev()
-	r, _, _ := calculations.RiskFromRiskContribution(risks, weights, table.CorrelationMatrix())
+	r, _ := calculations.PortfolioVolatility(risks, weights, table.CorrelationMatrix())
 	return r
 }
 
