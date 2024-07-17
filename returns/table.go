@@ -15,7 +15,7 @@ import (
 
 	"github.com/portfoliotree/round"
 
-	"github.com/portfoliotree/portfolio/calculations"
+	"github.com/portfoliotree/portfolio/calculate"
 )
 
 type Table struct {
@@ -257,17 +257,17 @@ func (table Table) Lists() []List {
 }
 
 func (table Table) CorrelationMatrix() [][]float64 {
-	return calculations.CorrelationMatrix(table.values)
+	return calculate.CorrelationMatrix(table.values)
 }
 
 func (table Table) ExpectedRisk(weights []float64) float64 {
 	risks := table.RisksFromStdDev()
-	r, _ := calculations.PortfolioVolatility(risks, weights, table.CorrelationMatrix())
+	r, _ := calculate.PortfolioVolatility(risks, weights, table.CorrelationMatrix())
 	return r
 }
 
 func (table Table) RiskFromStdDev(column int) float64 {
-	return calculations.RiskFromStdDev(table.values[column])
+	return calculate.RiskFromStdDev(table.values[column])
 }
 
 func (table Table) RisksFromStdDev() []float64 {
@@ -279,7 +279,7 @@ func (table Table) RisksFromStdDev() []float64 {
 }
 
 func (table Table) AnnualizedRisk(column int) float64 {
-	return calculations.AnnualizeRisk(table.RiskFromStdDev(column), calculations.PeriodsPerYear)
+	return calculate.AnnualizeRisk(table.RiskFromStdDev(column), calculate.PeriodsPerYear)
 }
 
 func (table Table) AnnualizedRisks() []float64 {
@@ -291,7 +291,7 @@ func (table Table) AnnualizedRisks() []float64 {
 }
 
 func (table Table) TimeWeightedReturn(column int) float64 {
-	return calculations.AnnualizedTimeWeightedReturn(table.values[column], calculations.PeriodsPerYear)
+	return calculate.AnnualizedTimeWeightedReturn(table.values[column], calculate.PeriodsPerYear)
 }
 
 func (table Table) TimeWeightedReturns() []float64 {
@@ -303,7 +303,7 @@ func (table Table) TimeWeightedReturns() []float64 {
 }
 
 func (table Table) AnnualizedArithmeticReturn(column int) float64 {
-	return calculations.AnnualizedArithmeticReturn(table.values[column], calculations.PeriodsPerYear)
+	return calculate.AnnualizedArithmeticReturn(table.values[column], calculate.PeriodsPerYear)
 }
 
 func (table Table) AnnualizedArithmeticReturns() []float64 {

@@ -1,4 +1,4 @@
-package calculations
+package calculate
 
 import (
 	"gonum.org/v1/gonum/stat"

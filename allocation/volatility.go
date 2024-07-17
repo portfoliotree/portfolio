@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/portfoliotree/portfolio/calculations"
+	"github.com/portfoliotree/portfolio/calculate"
 	"github.com/portfoliotree/portfolio/returns"
 )
 
@@ -26,7 +26,7 @@ func (*EqualVolatility) PolicyWeights(_ context.Context, _ time.Time, assetRetur
 	}
 
 	assetRisks := assetReturns.RisksFromStdDev()
-	calculations.EqualVolatilityWeights(ws, assetRisks)
+	calculate.EqualVolatilityWeights(ws, assetRisks)
 	return ws, nil
 }
 
@@ -48,6 +48,6 @@ func (*EqualInverseVolatility) PolicyWeights(_ context.Context, _ time.Time, ass
 	}
 
 	vols := assetReturns.RisksFromStdDev()
-	calculations.EqualInverseVolatilityWeights(ws, vols)
+	calculate.EqualInverseVolatilityWeights(ws, vols)
 	return ws, nil
 }

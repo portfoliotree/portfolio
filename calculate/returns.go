@@ -1,4 +1,4 @@
-package calculations
+package calculate
 
 // HoldingPeriodReturns calculates the holding period returns between the given quotes
 // The Return's Time field remains the zero value.

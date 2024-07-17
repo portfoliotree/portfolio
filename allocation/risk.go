@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/portfoliotree/portfolio/calculations"
+	"github.com/portfoliotree/portfolio/calculate"
 	"github.com/portfoliotree/portfolio/returns"
 )
 
@@ -25,6 +25,6 @@ func (*EqualRiskContribution) PolicyWeights(ctx context.Context, _ time.Time, as
 		return ws, err
 	}
 
-	err = calculations.EqualRiskContributionWeights(ctx, ws, assetReturns.RisksFromStdDev(), assetReturns.CorrelationMatrix())
+	err = calculate.EqualRiskContributionWeights(ctx, ws, assetReturns.RisksFromStdDev(), assetReturns.CorrelationMatrix())
 	return ws, err
 }

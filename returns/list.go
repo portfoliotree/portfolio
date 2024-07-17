@@ -6,7 +6,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/portfoliotree/portfolio/calculations"
+	"github.com/portfoliotree/portfolio/calculate"
 )
 
 type List []Return
@@ -19,7 +19,7 @@ func (list List) Swap(i, j int)      { list[i], list[j] = list[j], list[i] }
 
 func (list List) AddSpread(annualizedSpread float64) List {
 	result := slices.Clone(list)
-	s := math.Pow(1.0+annualizedSpread, 1.0/calculations.PeriodsPerYear) - 1
+	s := math.Pow(1.0+annualizedSpread, 1.0/calculate.PeriodsPerYear) - 1
 	for i := range result {
 		result[i].Value = result[i].Value + s
 	}
@@ -92,7 +92,7 @@ func (list List) Excess(other List) List {
 }
 
 func (list List) TimeWeightedReturn() float64 {
-	return calculations.TimeWeightedReturn(list.Values())
+	return calculate.TimeWeightedReturn(list.Values())
 }
 
 func (list List) EndAndStartDate() (end, start time.Time, _ error) {
@@ -104,21 +104,21 @@ func (list List) EndAndStartDate() (end, start time.Time, _ error) {
 
 // Risk calls calculations.RiskFromStdDev
 func (list List) Risk() float64 {
-	return calculations.RiskFromStdDev(list.Values())
+	return calculate.RiskFromStdDev(list.Values())
 }
 
 // AnnualizedRisk must receive at least 2 returns otherwise it returns 0
 func (list List) AnnualizedRisk() float64 {
-	return calculations.AnnualizeRisk(list.Risk(), calculations.PeriodsPerYear)
+	return calculate.AnnualizeRisk(list.Risk(), calculate.PeriodsPerYear)
 }
 
 // AnnualizedTimeWeightedReturn must receive at least 2 returns otherwise it returns 0
 func (list List) AnnualizedTimeWeightedReturn() float64 {
-	return calculations.AnnualizedTimeWeightedReturn(list.Values(), calculations.PeriodsPerYear)
+	return calculate.AnnualizedTimeWeightedReturn(list.Values(), calculate.PeriodsPerYear)
 }
 
 func (list List) AnnualizedArithmeticReturn() float64 {
-	return calculations.AnnualizedArithmeticReturn(list.Values(), calculations.PeriodsPerYear)
+	return calculate.AnnualizedArithmeticReturn(list.Values(), calculate.PeriodsPerYear)
 }
 
 func compareTimes(x, y time.Time) int {
