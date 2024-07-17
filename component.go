@@ -4,10 +4,31 @@ import (
 	"fmt"
 	"net/url"
 	"regexp"
+	"slices"
 	"strings"
 
 	"gopkg.in/yaml.v3"
 )
+
+const (
+	ComponentTypeSecurity   = "Security"
+	ComponentTypePortfolio  = "Portfolio"
+	ComponentTypeEquity     = "Equity"
+	ComponentTypeETF        = "ETF"
+	ComponentTypeFactor     = "Factor"
+	ComponentTypeMutualFund = "Mutual Fund"
+)
+
+func ComponentTypes() []string {
+	return []string{
+		ComponentTypeSecurity,
+		ComponentTypePortfolio,
+		ComponentTypeEquity,
+		ComponentTypeETF,
+		ComponentTypeFactor,
+		ComponentTypeMutualFund,
+	}
+}
 
 type Component struct {
 	Type  string `yaml:"type,omitempty"  json:"type,omitempty"  bson:"type"`
@@ -15,9 +36,9 @@ type Component struct {
 	Label string `yaml:"label,omitempty" json:"label,omitempty" bson:"label"`
 }
 
-var componentExpression = regexp.MustCompile(`^[a-zA-Z0-9.:s]{1,24}$`)
+var componentExpression = regexp.MustCompile(`^[a-zA-Z0-9.:]{1,24}$`)
 
-func (component Component) Validate() error {
+func (component *Component) Validate() error {
 	if component.ID == "" {
 		return fmt.Errorf(`component ID must be set`)
 	}
@@ -26,6 +47,9 @@ func (component Component) Validate() error {
 	}
 	if !componentExpression.MatchString(component.ID) {
 		return fmt.Errorf("component id %q does not match the component ID pattern %q", component.ID, componentExpression.String())
+	}
+	if component.Type != "" && !slices.Contains(ComponentTypes(), component.Type) {
+		return fmt.Errorf("component type %q is not a known component type", component.Type)
 	}
 	return nil
 }
