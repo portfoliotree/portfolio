@@ -25,9 +25,6 @@ type Document struct {
 	Type     string        `json:"type"     yaml:"type"     bson:"type"`
 	Metadata Metadata      `json:"metadata" yaml:"metadata" bson:"metadata"`
 	Spec     Specification `json:"spec"     yaml:"spec"     bson:"spec"`
-
-	Filepath  string `json:"filepath,omitempty" yaml:"-" bson:"filepath,omitempty"`
-	FileIndex int    `json:"index,omitempty"    yaml:"-" bson:"index,omitempty"`
 }
 
 func (d Document) Validate() error {

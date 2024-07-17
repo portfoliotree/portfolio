@@ -5,7 +5,6 @@ import (
 	"io/fs"
 	"os"
 	"path"
-	"path/filepath"
 	"strings"
 )
 
@@ -20,7 +19,7 @@ func ParseSpecificationFile(specificationFilePath string) ([]Document, error) {
 		return nil, err
 	}
 	defer closeAndIgnoreError(f)
-	return portfoliosFromFile(specificationFilePath, f)
+	return portfoliosFromFile(f)
 }
 
 func checkPortfolioFileName(fileName string) error {
@@ -33,14 +32,10 @@ func checkPortfolioFileName(fileName string) error {
 	}
 }
 
-func portfoliosFromFile(fileName string, file fs.File) ([]Document, error) {
+func portfoliosFromFile(file fs.File) ([]Document, error) {
 	result, err := ParseDocuments(file)
 	if err != nil {
 		return result, err
-	}
-	for i := range result {
-		result[i].Filepath = filepath.ToSlash(fileName)
-		result[i].FileIndex = i
 	}
 	return result, nil
 }
@@ -65,7 +60,7 @@ func WalkDirectoryAndParseSpecificationFiles(dir fs.FS) ([]Document, error) {
 			return err
 		}
 		defer closeAndIgnoreError(f)
-		specs, err := portfoliosFromFile(filePath, f)
+		specs, err := portfoliosFromFile(f)
 		if err != nil {
 			return err
 		}
