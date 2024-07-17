@@ -8,6 +8,10 @@ import (
 	"gonum.org/v1/gonum/stat"
 )
 
+func Variance(volatility float64) float64 {
+	return volatility * volatility
+}
+
 func NumberOfBets(weightedAverageRisk float64, portfolioRisk float64) (float64, error) {
 	if portfolioRisk == 0 {
 		return 0, errors.New("can't divide by 0")

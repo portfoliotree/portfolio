@@ -1,12 +1,10 @@
-package allocation
+package calculations
 
 import (
 	"context"
 	"errors"
 
 	"gonum.org/v1/gonum/optimize"
-
-	"github.com/portfoliotree/portfolio/returns"
 )
 
 const (
@@ -63,22 +61,6 @@ func optWeights(ctx context.Context, weights []float64, fn func(ws []float64) fl
 	scaleToUnitRange(weights)
 
 	return nil
-}
-
-func ensureEnoughReturns(assetReturns returns.Table) error {
-	if assetReturns.NumberOfColumns() == 0 || assetReturns.NumberOfRows() < 2 {
-		return errors.New("not enough data")
-	}
-	return nil
-}
-
-func isOnlyZeros(a []float64) bool {
-	for _, v := range a {
-		if v != 0 {
-			return false
-		}
-	}
-	return true
 }
 
 func scaleToUnitRange(list []float64) {

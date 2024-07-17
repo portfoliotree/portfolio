@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/portfoliotree/portfolio/calculations"
 	"github.com/portfoliotree/portfolio/returns"
 )
 
@@ -25,18 +26,8 @@ func (*EqualVolatility) PolicyWeights(_ context.Context, _ time.Time, assetRetur
 	}
 
 	assetRisks := assetReturns.RisksFromStdDev()
-
-	sumOfAssetRisks := 0.0
-	for i := range assetRisks {
-		sumOfAssetRisks += assetRisks[i]
-	}
-
-	newWeights := make([]float64, len(assetRisks))
-	for i := range assetRisks {
-		newWeights[i] = assetRisks[i] / sumOfAssetRisks
-	}
-
-	return newWeights, nil
+	calculations.EqualVolatilityWeights(ws, assetRisks)
+	return ws, nil
 }
 
 type EqualInverseVolatility struct{}
@@ -56,20 +47,7 @@ func (*EqualInverseVolatility) PolicyWeights(_ context.Context, _ time.Time, ass
 		return ws, err
 	}
 
-	assetRisks := assetReturns.RisksFromStdDev()
-	for i := range assetRisks {
-		assetRisks[i] = 1.0 / assetRisks[i]
-	}
-
-	sumOfAssetRisks := 0.0
-	for i := range assetRisks {
-		sumOfAssetRisks += assetRisks[i]
-	}
-
-	newWeights := make([]float64, len(assetRisks))
-	for i := range assetRisks {
-		newWeights[i] = assetRisks[i] / sumOfAssetRisks
-	}
-
-	return newWeights, nil
+	vols := assetReturns.RisksFromStdDev()
+	calculations.EqualInverseVolatilityWeights(ws, vols)
+	return ws, nil
 }

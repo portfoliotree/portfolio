@@ -2,7 +2,6 @@ package allocation
 
 import (
 	"context"
-	"math"
 	"time"
 
 	"github.com/portfoliotree/portfolio/calculations"
@@ -26,21 +25,6 @@ func (*EqualRiskContribution) PolicyWeights(ctx context.Context, _ time.Time, as
 		return ws, err
 	}
 
-	assetRisks := assetReturns.RisksFromStdDev()
-
-	target := 1.0 / float64(len(assetRisks))
-
-	cm := assetReturns.CorrelationMatrix()
-
-	weights := make([]float64, len(ws))
-	copy(weights, ws)
-
-	return weights, optWeights(ctx, weights, func(ws []float64) float64 {
-		riskWeights := calculations.RiskWeights(calculations.PortfolioVolatility(assetRisks, ws, cm))
-		var diff float64
-		for i := range riskWeights {
-			diff += math.Abs(target - riskWeights[i])
-		}
-		return diff
-	})
+	err = calculations.EqualRiskContributionWeights(ctx, ws, assetReturns.RisksFromStdDev(), assetReturns.CorrelationMatrix())
+	return ws, err
 }
