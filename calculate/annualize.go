@@ -28,5 +28,5 @@ func AnnualizedArithmeticReturn(returnValues []float64, periods float64) float64
 		return 0
 	}
 	arithmeticReturn := stat.Mean(returnValues, nil)
-	return arithmeticReturn * PeriodsPerYear
+	return arithmeticReturn * periods
 }
