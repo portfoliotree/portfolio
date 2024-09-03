@@ -86,7 +86,7 @@ func TestMetrics(t *testing.T) {
 			confidenceLevel = 0.95
 		)
 		result := ValueAtRisk(portfolio, portfolioValue, confidenceLevel, PeriodsPerYear)
-		assert.InDelta(t, 2148.94, result, 0.01)
+		assert.InDelta(t, -2148.94, result, 0.01)
 	})
 }
 

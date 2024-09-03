@@ -73,7 +73,7 @@ func ValueAtRisk(values []float64, portfolioValue, confidenceLevel, periodsPerYe
 		Sigma: 1.0,
 	}
 	zScore := normal.Quantile(confidenceLevel)
-	return portfolioValue * zScore * AnnualizeRisk(stat.PopStdDev(values, nil), periodsPerYear)
+	return portfolioValue * -zScore * AnnualizeRisk(stat.PopStdDev(values, nil), periodsPerYear)
 }
 
 func negativeValues(out, in []float64) []float64 {
