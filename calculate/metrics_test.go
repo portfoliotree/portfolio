@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"testing"
 
@@ -22,6 +23,9 @@ func TestMetrics(t *testing.T) {
 	assert.Len(t, cash, 10_000)
 	assert.Len(t, portfolio, 10_000)
 	assert.Len(t, benchmark, 10_000)
+	for i := range data {
+		slices.Reverse(data[i])
+	}
 
 	// Downside Volatility	13.03%	=SQRT(AVERAGE(K2:K10001))*SQRT($N$1)
 	t.Run("Downside Volatility", func(t *testing.T) {

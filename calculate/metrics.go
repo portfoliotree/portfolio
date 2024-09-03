@@ -88,23 +88,25 @@ func negativeValues(out, in []float64) []float64 {
 func retainedAfterDrawdown(values []float64) []float64 {
 	cum := make([]float64, len(values))
 	for i := range values {
+		index := len(values) - 1 - i
 		if i == 0 {
-			cum[i] = 1 + values[i]
+			cum[index] = 1 + values[index]
 		} else {
-			cum[i] = cum[i-1] * (1 + values[i])
+			cum[index] = cum[index+1] * (1 + values[index])
 		}
 	}
 	retained := make([]float64, len(values))
 	for i := range cum {
-		if i == 0 {
-			retained[i] = 1
+		index := len(values) - 1 - i
+		if index == len(cum)-1 {
+			retained[index] = 1
 			continue
 		}
-		x := floats.Max(cum[0:i])
+		x := floats.Max(cum[index:])
 		if x < 1 {
 			x = 1
 		}
-		retained[i] = cum[i] / x
+		retained[index] = cum[index] / x
 	}
 	return retained
 }
