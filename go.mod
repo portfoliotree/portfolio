@@ -1,12 +1,12 @@
 module github.com/portfoliotree/portfolio
 
-go 1.22.0
+go 1.23
 
-toolchain go1.23.0
+toolchain go1.23.3
 
 require (
 	github.com/portfoliotree/round v0.1.0
-	github.com/stretchr/testify v1.9.0
+	github.com/stretchr/testify v1.10.0
 	go.mongodb.org/mongo-driver v1.17.1
 	gonum.org/v1/gonum v0.15.1
 	gopkg.in/yaml.v3 v3.0.1
