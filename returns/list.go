@@ -166,9 +166,9 @@ func indexOfClosest[T any](list []T, time func(T) time.Time, t time.Time) int {
 		if len(list) == 1 {
 			return 1
 		}
-		return index + indexOfClosest[T](list[index:], time, t)
+		return index + indexOfClosest(list[index:], time, t)
 	}
-	return indexOfClosest[T](list[:index], time, t)
+	return indexOfClosest(list[:index], time, t)
 }
 
 func inBounds[T any](list []T, index int) bool {

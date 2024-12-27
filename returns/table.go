@@ -11,6 +11,8 @@ import (
 	"strconv"
 	"time"
 
+	"go.mongodb.org/mongo-driver/bson"
+
 	"github.com/portfoliotree/round"
 
 	"github.com/portfoliotree/portfolio/calculate"
@@ -36,9 +38,21 @@ func NewTable(list []List) Table {
 	return table
 }
 
+func (table *Table) UnmarshalBSON(buf []byte) error {
+	var enc encodedTable
+	err := bson.Unmarshal(buf, &enc)
+	table.times = enc.Times
+	table.values = enc.Values
+	return err
+}
+
+func (table Table) MarshalBSON() ([]byte, error) {
+	return bson.Marshal(newEncodedTable(table.times, table.values))
+}
+
 type encodedTable struct {
-	Times  []time.Time `json:"times"`
-	Values [][]float64 `json:"values"`
+	Times  []time.Time `json:"times" bson:"times"`
+	Values [][]float64 `json:"values" bson:"values"`
 }
 
 func newEncodedTable(times []time.Time, values [][]float64) encodedTable {
@@ -464,8 +478,23 @@ func (table Table) RangeIndexes(last, first time.Time) (end int, start int) {
 }
 
 type encodedColumnGroup struct {
-	Index  int `json:"index"`
-	Length int `json:"length"`
+	Index  int `json:"index" bson:"index"`
+	Length int `json:"length" bson:"length"`
+}
+
+func (group *ColumnGroup) UnmarshalBSON(buf []byte) error {
+	var ecg encodedColumnGroup
+	err := bson.Unmarshal(buf, &ecg)
+	group.index = ecg.Index
+	group.length = ecg.Length
+	return err
+}
+
+func (group ColumnGroup) MarshalBSON() ([]byte, error) {
+	return bson.Marshal(encodedColumnGroup{
+		Index:  group.index,
+		Length: group.length,
+	})
 }
 
 func (group *ColumnGroup) UnmarshalJSON(buf []byte) error {

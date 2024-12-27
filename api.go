@@ -11,6 +11,8 @@ import (
 	"os"
 	"strings"
 
+	"go.mongodb.org/mongo-driver/bson/primitive"
+
 	"github.com/portfoliotree/portfolio/returns"
 )
 
@@ -64,7 +66,11 @@ func ParseComponentsFromURL(values url.Values, prefix string) ([]Component, erro
 	}
 	components := make([]Component, 0, len(assetValues))
 	for _, v := range assetValues {
-		components = append(components, Component{ID: v})
+		if _, err := primitive.ObjectIDFromHex(v); err == nil {
+			components = append(components, Component{Type: "Portfolio", ID: v})
+			continue
+		}
+		components = append(components, Component{Type: "Security", ID: v})
 	}
 	return components, nil
 }
