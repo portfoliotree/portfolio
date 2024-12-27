@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"gopkg.in/yaml.v3"
 
 	"github.com/portfoliotree/portfolio/allocation"
@@ -18,7 +17,7 @@ import (
 	"github.com/portfoliotree/portfolio/returns"
 )
 
-type Identifier = primitive.ObjectID
+type Identifier = string
 
 type Document struct {
 	ID       Identifier    `json:"_id"      yaml:"_id"      bson:"_id"`
