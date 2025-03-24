@@ -19,12 +19,12 @@ func ComponentReturnsProvider() portfolio.ComponentReturnsProvider {
 
 type crp struct{}
 
-//go:embed testdata
+//go:embed data
 var data embed.FS
 
 // ComponentReturnsList implements portfolio.ComponentReturnsProvider
 func (crp) ComponentReturnsList(_ context.Context, component portfolio.Component) (returns.List, error) {
-	buf, err := fs.ReadFile(data, path.Join("testdata", "returns", component.ID+".json"))
+	buf, err := fs.ReadFile(data, path.Join("data", "returns", component.ID+".json"))
 	if err != nil {
 		return nil, err
 	}
