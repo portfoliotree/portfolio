@@ -4,12 +4,13 @@ import (
 	"context"
 	"testing"
 
+	"github.com/portfoliotree/timetable"
+
 	"github.com/portfoliotree/portfolio"
 	"github.com/portfoliotree/portfolio/allocation"
 	"github.com/portfoliotree/portfolio/backtest"
 	"github.com/portfoliotree/portfolio/backtest/backtestconfig"
 	"github.com/portfoliotree/portfolio/portfoliotest"
-	"github.com/portfoliotree/portfolio/returns"
 )
 
 func BenchmarkRun1Q(b *testing.B) {
@@ -36,7 +37,7 @@ func BenchmarkRunMax(b *testing.B) {
 	benchmarkRun(b, rs)
 }
 
-func benchmarkRun(b *testing.B, table returns.Table) {
+func benchmarkRun(b *testing.B, table *timetable.Compact[float64]) {
 	b.Helper()
 	end := table.LastTime()
 	start := table.FirstTime()
@@ -54,12 +55,12 @@ func benchmarkRun(b *testing.B, table returns.Table) {
 	}
 }
 
-func benchmarkRunReturns(b *testing.B) returns.Table {
+func benchmarkRunReturns(b *testing.B) *timetable.Compact[float64] {
 	p := portfoliotest.ComponentReturnsProvider()
 	assets := []portfolio.Component{{ID: "ACWI"}, {ID: "AGG"}}
 	table, err := p.ComponentReturnsTable(context.Background(), assets...)
 	if err != nil {
 		b.Fatal(err)
 	}
-	return table
+	return &table
 }
