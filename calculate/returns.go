@@ -1,5 +1,9 @@
 package calculate
 
+import (
+	"math"
+)
+
 // HoldingPeriodReturns calculates the holding period returns between the given quotes
 // The Return's Time field remains the zero value.
 func HoldingPeriodReturns(quotes []float64) []float64 {
@@ -36,4 +40,22 @@ func SharpeRatio(portfolioReturnValues, riskFreeReturnValues []float64, periods 
 	portfolioRisk := RiskFromStdDev(portfolioReturnValues)
 	riskFreeReturn := AnnualizedTimeWeightedReturn(riskFreeReturnValues, periods)
 	return (portfolioReturn - riskFreeReturn) / portfolioRisk
+}
+
+const MinArithmeticReturn = -0.9999
+
+func CompoundReturn(arithmeticReturn, volatility float64) float64 {
+	if arithmeticReturn <= MinArithmeticReturn {
+		return 0
+	}
+	portfolioVariance := math.Pow(volatility, 2)
+	compoundTerm := 1.0 + portfolioVariance*math.Pow(1.0+arithmeticReturn, -2.0)
+	geometricReturn := (1.0+arithmeticReturn)*math.Pow(compoundTerm, -0.5) - 1.0
+	return geometricReturn
+}
+
+func ArithmeticReturn(geometricReturn, volatility float64) float64 {
+	x1 := geometricReturn
+	x2 := volatility * volatility
+	return (1+x1)*math.Sqrt(1.0/2+(1.0/2*math.Sqrt(1+(4*x2)/(1+x1)/(1+x1)))) - 1
 }
