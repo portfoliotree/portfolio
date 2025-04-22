@@ -44,10 +44,10 @@ func SharpeRatio(portfolioReturnValues, riskFreeReturnValues []float64, periods 
 
 const MinArithmeticReturn = -0.9999
 
-// CompoundReturn calculates the compound return given the arithmetic return and volatility based on:
+// CAGRFromArithmeticReturn calculates the ex ante compound return based on:
 // Mindlin, Dimitry, On the Relationship between Arithmetic and Geometric Returns (August 14, 2011).
 // Available at SSRN: https://ssrn.com/abstract=2083915 or http://dx.doi.org/10.2139/ssrn.2083915
-func CompoundReturn(arithmeticReturn, volatility float64) float64 {
+func CAGRFromArithmeticReturn(arithmeticReturn, volatility float64) float64 {
 	if arithmeticReturn <= MinArithmeticReturn {
 		return 0
 	}
@@ -57,10 +57,10 @@ func CompoundReturn(arithmeticReturn, volatility float64) float64 {
 	return geometricReturn
 }
 
-// ArithmeticReturn calculates the arithmetic return given the geometric return and volatility based on:
+// ArithmeticReturnFromCAGR calculates the ex ante arithmetic return based on:
 // Mindlin, Dimitry, On the Relationship between Arithmetic and Geometric Returns (August 14, 2011).
 // Available at SSRN: https://ssrn.com/abstract=2083915 or http://dx.doi.org/10.2139/ssrn.2083915
-func ArithmeticReturn(geometricReturn, volatility float64) float64 {
+func ArithmeticReturnFromCAGR(geometricReturn, volatility float64) float64 {
 	x1 := geometricReturn
 	x2 := volatility * volatility
 	return (1+x1)*math.Sqrt(1.0/2+(1.0/2*math.Sqrt(1+(4*x2)/(1+x1)/(1+x1)))) - 1

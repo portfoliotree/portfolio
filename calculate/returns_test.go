@@ -20,7 +20,7 @@ func TestDiscreteReturns(t *testing.T) {
 
 func TestCompoundReturn(t *testing.T) {
 	t.Run("when vol is zero", func(t *testing.T) {
-		result := calculate.CompoundReturn(0.01230, 0)
+		result := calculate.CAGRFromArithmeticReturn(0.01230, 0)
 		assert.InDelta(t, 0.01230, result, 0.00001)
 	})
 }
@@ -36,8 +36,8 @@ func FuzzCompoundReturn(f *testing.F) {
 		v = math.Abs(v)
 		volatility := minVol + v*(maxVol-minVol)
 
-		geometricReturn := calculate.CompoundReturn(arithmeticReturn, volatility)
-		arithmeticReturnResult := calculate.ArithmeticReturn(geometricReturn, volatility)
+		geometricReturn := calculate.CAGRFromArithmeticReturn(arithmeticReturn, volatility)
+		arithmeticReturnResult := calculate.ArithmeticReturnFromCAGR(geometricReturn, volatility)
 
 		assert.False(t, math.IsNaN(geometricReturn))
 		assert.False(t, math.IsInf(geometricReturn, -1))
