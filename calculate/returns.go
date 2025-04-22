@@ -44,6 +44,11 @@ func SharpeRatio(portfolioReturnValues, riskFreeReturnValues []float64, periods 
 
 const MinArithmeticReturn = -0.9999
 
+// CompoundReturn calculates the compound return given the arithmetic return and volatility based on:
+// Mindlin, Dimitry, On the Relationship between Arithmetic and Geometric Returns (August 14, 2011).
+// Available at SSRN: https://ssrn.com/abstract=2083915 or http://dx.doi.org/10.2139/ssrn.2083915
+//
+// This assumes log-normal returns.
 func CompoundReturn(arithmeticReturn, volatility float64) float64 {
 	if arithmeticReturn <= MinArithmeticReturn {
 		return 0
@@ -54,6 +59,11 @@ func CompoundReturn(arithmeticReturn, volatility float64) float64 {
 	return geometricReturn
 }
 
+// ArithmeticReturn calculates the arithmetic return given the geometric return and volatility based on:
+// Mindlin, Dimitry, On the Relationship between Arithmetic and Geometric Returns (August 14, 2011).
+// Available at SSRN: https://ssrn.com/abstract=2083915 or http://dx.doi.org/10.2139/ssrn.2083915
+//
+// This assumes log-normal returns.
 func ArithmeticReturn(geometricReturn, volatility float64) float64 {
 	x1 := geometricReturn
 	x2 := volatility * volatility
