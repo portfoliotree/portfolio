@@ -4,15 +4,16 @@ import (
 	"context"
 	"time"
 
+	"github.com/portfoliotree/timetable"
+
 	"github.com/portfoliotree/portfolio/calculate"
-	"github.com/portfoliotree/portfolio/returns"
 )
 
 type EqualInverseVariance struct{}
 
 func (cw *EqualInverseVariance) Name() string { return "Equal Inverse Variance" }
 
-func (*EqualInverseVariance) PolicyWeights(_ context.Context, _ time.Time, assetReturns returns.Table, ws []float64) ([]float64, error) {
+func (*EqualInverseVariance) PolicyWeights(_ context.Context, _ time.Time, assetReturns timetable.Compact[float64], ws []float64) ([]float64, error) {
 	if isOnlyZeros(ws) {
 		for i := range ws {
 			ws[i] = 1.0
@@ -25,7 +26,10 @@ func (*EqualInverseVariance) PolicyWeights(_ context.Context, _ time.Time, asset
 		return ws, err
 	}
 
-	vols := assetReturns.RisksFromStdDev()
+	vols := make([]float64, 0, assetReturns.NumberOfColumns())
+	for _, vs := range assetReturns.UnderlyingValues() {
+		vols = append(vols, calculate.RiskFromStdDev(vs))
+	}
 	calculate.InverseVarianceWeights(ws, vols)
 	return ws, nil
 }

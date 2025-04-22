@@ -3,10 +3,10 @@ package allocation
 import (
 	"errors"
 
-	"github.com/portfoliotree/portfolio/returns"
+	"github.com/portfoliotree/timetable"
 )
 
-func ensureEnoughReturns(assetReturns returns.Table) error {
+func ensureEnoughReturns(assetReturns timetable.Compact[float64]) error {
 	if assetReturns.NumberOfColumns() == 0 || assetReturns.NumberOfRows() < 2 {
 		return errors.New("not enough data")
 	}

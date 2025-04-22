@@ -11,9 +11,8 @@ import (
 	"os"
 	"strings"
 
+	"github.com/portfoliotree/timetable"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-
-	"github.com/portfoliotree/portfolio/returns"
 )
 
 const (
@@ -36,13 +35,13 @@ const (
 	ReturnsURLPath = "/api/returns"
 )
 
-func (pf *Specification) AssetReturns(ctx context.Context) (returns.Table, error) {
+func (pf *Specification) AssetReturns(ctx context.Context) (timetable.Compact[float64], error) {
 	if len(pf.Assets) == 0 {
-		return returns.Table{}, nil
+		return timetable.Compact[float64]{}, nil
 	}
 	u, err := url.Parse(portfolioTreeURL())
 	if err != nil {
-		return returns.Table{}, err
+		return timetable.Compact[float64]{}, err
 	}
 	u.Path = ReturnsURLPath
 	q := u.Query()
@@ -53,10 +52,10 @@ func (pf *Specification) AssetReturns(ctx context.Context) (returns.Table, error
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
 	if err != nil {
-		return returns.Table{}, err
+		return timetable.Compact[float64]{}, err
 	}
 
-	return doJSONRequest[returns.Table](http.DefaultClient.Do, req)
+	return doJSONRequest[timetable.Compact[float64]](http.DefaultClient.Do, req)
 }
 
 func ParseComponentsFromURL(values url.Values, prefix string) ([]Component, error) {
@@ -112,6 +111,6 @@ func closeAndIgnoreError(closer io.Closer) {
 
 // ComponentReturnsProvider is currently used for tests.
 type ComponentReturnsProvider interface {
-	ComponentReturnsList(ctx context.Context, component Component) (returns.List, error)
-	ComponentReturnsTable(ctx context.Context, component ...Component) (returns.Table, error)
+	ComponentReturnsList(ctx context.Context, component Component) (timetable.List[float64], error)
+	ComponentReturnsTable(ctx context.Context, component ...Component) (timetable.Compact[float64], error)
 }

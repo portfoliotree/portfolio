@@ -13,12 +13,12 @@ import (
 	"github.com/portfoliotree/portfolio/allocation"
 	"github.com/portfoliotree/portfolio/backtest"
 	"github.com/portfoliotree/portfolio/backtest/backtestconfig"
-	"github.com/portfoliotree/portfolio/returns"
+	"github.com/portfoliotree/timetable"
 )
 
 func TestSpec_Run(t *testing.T) {
 	t.Run("end date is before start date", func(t *testing.T) {
-		assets := returns.NewTable([]returns.List{
+		assets := timetable.NewTable([]timetable.List{
 			{{Time: date("2020-01-03")}, {Time: date("2020-01-02")}, {Time: date("2020-01-01")}},
 			{{Time: date("2020-01-03")}, {Time: date("2020-01-02")} /*{Time: date("2020-01-01")}*/},
 		})
@@ -27,7 +27,7 @@ func TestSpec_Run(t *testing.T) {
 		assert.Error(t, err)
 	})
 	t.Run("when zero value times are passed", func(t *testing.T) {
-		assets := returns.NewTable([]returns.List{{
+		assets := timetable.NewTable([]timetable.List{{
 			{Time: date("2021-01-04"), Value: 0.8},
 			{Time: date("2021-01-03"), Value: 0.4},
 			{Time: date("2021-01-02"), Value: 0.2},
@@ -43,8 +43,8 @@ func TestSpec_Run(t *testing.T) {
 		assert.Equal(t, date("2021-01-04"), bt.ReturnsTable.LastTime())
 		assert.Equal(t, date("2021-01-01"), bt.ReturnsTable.FirstTime())
 	})
-	t.Run("when alg returns values they are not changed", func(t *testing.T) {
-		assets := returns.NewTable([]returns.List{
+	t.Run("when alg timetable values they are not changed", func(t *testing.T) {
+		assets := timetable.NewTable([]timetable.List{
 			{
 				{Time: date("2021-01-04"), Value: 0.8},
 				{Time: date("2021-01-03"), Value: 0.4},
@@ -63,14 +63,14 @@ func TestSpec_Run(t *testing.T) {
 		policyUpdateIntervalFunc := backtestconfig.IntervalDaily.CheckFunction()
 
 		ws := []float64{.715, .315}
-		_, err := backtest.Run(context.Background(), date("2021-01-04"), date("2021-01-01"), assets, allocationFunction(func(_ context.Context, _ time.Time, _ returns.Table, currentWeights []float64) ([]float64, error) {
+		_, err := backtest.Run(context.Background(), date("2021-01-04"), date("2021-01-01"), assets, allocationFunction(func(_ context.Context, _ time.Time, _ timetable.Table, currentWeights []float64) ([]float64, error) {
 			return ws, nil
 		}), windowFunc, rebalanceIntervalFunc, policyUpdateIntervalFunc)
 		assert.NoError(t, err)
 		assert.Equal(t, []float64{.715, .315}, ws)
 	})
 	t.Run("start date does not have a return", func(t *testing.T) {
-		rs := returns.NewTable([]returns.List{
+		rs := timetable.NewTable([]timetable.List{
 			{{Time: date("2020-01-03")}, {Time: date("2020-01-02")}, {Time: date("2020-01-01")}},
 			{{Time: date("2020-01-03")}, {Time: date("2020-01-02")} /*{Time: date("2020-01-01")}*/},
 		})
@@ -84,7 +84,7 @@ func TestSpec_Run(t *testing.T) {
 		rebalanceIntervalFunc := backtestconfig.IntervalDaily.CheckFunction()
 		policyUpdateIntervalFunc := backtestconfig.IntervalDaily.CheckFunction()
 
-		assets := returns.NewTable([]returns.List{
+		assets := timetable.NewTable([]timetable.List{
 			{{Time: date("2020-01-03")}, {Time: date("2020-01-02")}, {Time: date("2020-01-01")}},
 			{ /*{Time: date("2020-01-03")},*/ {Time: date("2020-01-02")}, {Time: date("2020-01-01")}},
 		})
@@ -94,8 +94,8 @@ func TestSpec_Run(t *testing.T) {
 		_, err := backtest.Run(context.Background(), end, start, assets, alg, windowFunc, rebalanceIntervalFunc, policyUpdateIntervalFunc)
 		assert.Error(t, err)
 	})
-	t.Run("with no returns", func(t *testing.T) {
-		assets := returns.Table{}
+	t.Run("with no timetable", func(t *testing.T) {
+		assets := timetable.Table{}
 
 		alg := testAlgorithm()
 		windowFunc := backtestconfig.WindowNotSet.Function
@@ -116,13 +116,13 @@ func TestSpec_Run(t *testing.T) {
 		rebalanceIntervalFunc := backtestconfig.IntervalDaily.CheckFunction()
 		policyUpdateIntervalFunc := backtestconfig.IntervalDaily.CheckFunction()
 
-		asset := returns.List{
+		asset := timetable.List{
 			{Time: date("2021-01-04"), Value: 0.8},
 			{Time: date("2021-01-03"), Value: 0.4},
 			{Time: date("2021-01-02"), Value: 0.2},
 			{Time: date("2021-01-01"), Value: 0.1},
 		}
-		assets := returns.NewTable([]returns.List{asset})
+		assets := timetable.NewTable([]timetable.List{asset})
 		end, start, _ := assets.EndAndStartDates()
 
 		result, err := backtest.Run(context.Background(), end, start, assets, alg, windowFunc, rebalanceIntervalFunc, policyUpdateIntervalFunc)
@@ -138,7 +138,7 @@ func TestSpec_Run(t *testing.T) {
 		rebalanceIntervalFunc := backtestconfig.IntervalDaily.CheckFunction()
 		policyUpdateIntervalFunc := backtestconfig.IntervalDaily.CheckFunction()
 
-		asset := returns.List{
+		asset := timetable.List{
 			{Time: date("2021-01-07"), Value: 6.4},
 			{Time: date("2021-01-06"), Value: 3.2},
 			{Time: date("2021-01-05"), Value: 1.6},
@@ -147,7 +147,7 @@ func TestSpec_Run(t *testing.T) {
 			{Time: date("2021-01-02"), Value: 0.2},
 			{Time: date("2021-01-01"), Value: 0.1},
 		}
-		assets := returns.NewTable([]returns.List{asset})
+		assets := timetable.NewTable([]timetable.List{asset})
 		end, start, _ := assets.EndAndStartDates()
 
 		result, err := backtest.Run(context.Background(), end, start, assets, alg, windowFunc, rebalanceIntervalFunc, policyUpdateIntervalFunc)
@@ -163,13 +163,13 @@ func TestSpec_Run(t *testing.T) {
 	})
 
 	t.Run("it responds to context cancellation", func(t *testing.T) {
-		asset := returns.List{
+		asset := timetable.List{
 			{Time: date("2021-01-04"), Value: 0.8},
 			{Time: date("2021-01-03"), Value: 0.4},
 			{Time: date("2021-01-02"), Value: 0.2},
 			{Time: date("2021-01-01"), Value: 0.1},
 		}
-		assets := returns.NewTable([]returns.List{asset})
+		assets := timetable.NewTable([]timetable.List{asset})
 		end, start := asset[0].Time, asset[len(asset)-1].Time
 
 		ctx, cancel := context.WithCancel(context.Background())
@@ -179,7 +179,7 @@ func TestSpec_Run(t *testing.T) {
 			<-c
 			cancel()
 		}()
-		alg := allocationFunction(func(ctx context.Context, _ time.Time, _ returns.Table, ws []float64) (targetWeights []float64, err error) {
+		alg := allocationFunction(func(ctx context.Context, _ time.Time, _ timetable.Table, ws []float64) (targetWeights []float64, err error) {
 			close(c)
 			<-ctx.Done()
 			return ws, ctx.Err()
@@ -194,7 +194,7 @@ func TestSpec_Run(t *testing.T) {
 	})
 
 	t.Run("daily rebalancing", func(t *testing.T) {
-		asset1 := returns.List{
+		asset1 := timetable.List{
 			{Time: date("2021-01-07"), Value: -0.1},
 			{Time: date("2021-01-06"), Value: 0.25},
 			{Time: date("2021-01-05"), Value: -0.1},
@@ -203,7 +203,7 @@ func TestSpec_Run(t *testing.T) {
 			{Time: date("2021-01-02"), Value: 0.1},
 			{Time: date("2021-01-01"), Value: 0},
 		}
-		asset2 := returns.List{
+		asset2 := timetable.List{
 			{Time: date("2021-01-07"), Value: 0.3},
 			{Time: date("2021-01-06"), Value: 0.2},
 			{Time: date("2021-01-05"), Value: -0.5},
@@ -212,7 +212,7 @@ func TestSpec_Run(t *testing.T) {
 			{Time: date("2021-01-02"), Value: 0.5},
 			{Time: date("2021-01-01"), Value: -0.5},
 		}
-		assets := returns.NewTable([]returns.List{asset1, asset2})
+		assets := timetable.NewTable([]timetable.List{asset1, asset2})
 
 		alg := testAlgorithm()
 		windowFunc := backtestconfig.OneDayWindow.Function
@@ -229,7 +229,7 @@ func TestSpec_Run(t *testing.T) {
 	})
 
 	t.Run("when the policy is not implementable at first data", func(t *testing.T) {
-		asset1 := returns.List{
+		asset1 := timetable.List{
 			{Time: date("2021-04-23"), Value: -0.1},
 			{Time: date("2021-04-22"), Value: 0.25},
 			{Time: date("2021-04-21"), Value: -0.1},
@@ -238,7 +238,7 @@ func TestSpec_Run(t *testing.T) {
 			{Time: date("2021-04-16"), Value: 0.1},
 			{Time: date("2021-04-15"), Value: 0},
 		}
-		asset2 := returns.List{
+		asset2 := timetable.List{
 			{Time: date("2021-04-23"), Value: -0.1},
 			{Time: date("2021-04-22"), Value: 0.25},
 			{Time: date("2021-04-21"), Value: -0.1},
@@ -247,9 +247,9 @@ func TestSpec_Run(t *testing.T) {
 			{Time: date("2021-04-16"), Value: 0.1},
 			{Time: date("2021-04-15"), Value: 0},
 		}
-		assets := returns.NewTable([]returns.List{asset1, asset2})
+		assets := timetable.NewTable([]timetable.List{asset1, asset2})
 		fallback := testAlgorithm()
-		alg := allocationFunction(func(ctx context.Context, t time.Time, assetReturns returns.Table, currentWeights []float64) ([]float64, error) {
+		alg := allocationFunction(func(ctx context.Context, t time.Time, assetReturns timetable.Table, currentWeights []float64) ([]float64, error) {
 			if t.Before(date("2021-04-20")) {
 				return nil, backtest.ErrorNotEnoughData{}
 			}
@@ -264,7 +264,7 @@ func TestSpec_Run(t *testing.T) {
 
 		assert.NoError(t, err)
 
-		expected := returns.List{
+		expected := timetable.List{
 			{Time: date("2021-04-23"), Value: -0.10},
 			{Time: date("2021-04-22"), Value: 0.25},
 			{Time: date("2021-04-21"), Value: -0.10},
@@ -276,20 +276,20 @@ func TestSpec_Run(t *testing.T) {
 		assert.Equal(t, rs, expected)
 	})
 
-	t.Run("composite returns are calculated correctly", func(t *testing.T) {
-		asset1 := returns.List{
+	t.Run("composite timetable are calculated correctly", func(t *testing.T) {
+		asset1 := timetable.List{
 			{Time: date("2021-04-04"), Value: 0.20},
 			{Time: date("2021-04-03"), Value: 0.10},
 			{Time: date("2021-04-02"), Value: 0.00},
 			{Time: date("2021-04-01"), Value: 0.50},
 		}
-		asset2 := returns.List{
+		asset2 := timetable.List{
 			{Time: date("2021-04-04"), Value: 0.00},
 			{Time: date("2021-04-03"), Value: 0.10},
 			{Time: date("2021-04-02"), Value: 0.20},
 			{Time: date("2021-04-01"), Value: -0.30},
 		}
-		assets := returns.NewTable([]returns.List{asset1, asset2})
+		assets := timetable.NewTable([]timetable.List{asset1, asset2})
 
 		alg := testAlgorithm()
 		windowFunc := backtestconfig.OneWeekWindow.Function
@@ -301,7 +301,7 @@ func TestSpec_Run(t *testing.T) {
 
 		assert.NoError(t, err)
 
-		expected := returns.List{
+		expected := timetable.List{
 			{Time: date("2021-04-04"), Value: 0.10},
 			{Time: date("2021-04-03"), Value: 0.10},
 			{Time: date("2021-04-02"), Value: 0.10},
@@ -314,7 +314,7 @@ func TestSpec_Run(t *testing.T) {
 	})
 
 	t.Run("when a look back is set", func(t *testing.T) {
-		asset1 := returns.List{
+		asset1 := timetable.List{
 			{Time: date("2021-04-23"), Value: -0.1},
 			{Time: date("2021-04-22"), Value: 0.25},
 			{Time: date("2021-04-21"), Value: -0.1},
@@ -328,7 +328,7 @@ func TestSpec_Run(t *testing.T) {
 		}
 
 		callCount := 0
-		alg := allocationFunction(func(_ context.Context, tm time.Time, assetReturns returns.Table, currentWeights []float64) ([]float64, error) {
+		alg := allocationFunction(func(_ context.Context, tm time.Time, assetReturns timetable.Table, currentWeights []float64) ([]float64, error) {
 			callCount++
 			assert.Equalf(t, assetReturns.NumberOfColumns(), 1, "call count %d", callCount)
 			for c := 0; c < assetReturns.NumberOfColumns(); c++ {
@@ -368,7 +368,7 @@ func TestSpec_Run(t *testing.T) {
 		rebalanceIntervalFunc := backtestconfig.IntervalDaily.CheckFunction()
 		policyUpdateIntervalFunc := backtestconfig.IntervalWeekly.CheckFunction()
 
-		assets := returns.NewTable([]returns.List{asset1})
+		assets := timetable.NewTable([]timetable.List{asset1})
 		end, start, _ := assets.EndAndStartDates()
 		start = backtestconfig.OneWeekWindow.Add(start)
 		result, err := backtest.Run(context.Background(), end, start, assets,
@@ -385,7 +385,7 @@ func TestSpec_Run(t *testing.T) {
 
 func TestSpec_Run_weightHistory(t *testing.T) {
 	t.Run("single asset", func(t *testing.T) {
-		asset := returns.List{
+		asset := timetable.List{
 			{Time: date("2021-01-22")},
 			{Time: date("2021-01-21")},
 			{Time: date("2021-01-20")},
@@ -402,7 +402,7 @@ func TestSpec_Run_weightHistory(t *testing.T) {
 			{Time: date("2021-01-07")},
 		}
 
-		assets := returns.NewTable([]returns.List{asset})
+		assets := timetable.NewTable([]timetable.List{asset})
 
 		alg := allocationFunction(randomWeights)
 		windowFunc := backtestconfig.WindowNotSet.Function
@@ -457,7 +457,7 @@ func TestSpec_Run_weightHistory(t *testing.T) {
 	})
 
 	t.Run("two assets with weekly rebalancing", func(t *testing.T) {
-		asset1 := returns.List{
+		asset1 := timetable.List{
 			{Time: date("2021-01-22"), Value: 0.0},
 			{Time: date("2021-01-21"), Value: 0.0},
 			{Time: date("2021-01-20"), Value: 0.0},
@@ -475,7 +475,7 @@ func TestSpec_Run_weightHistory(t *testing.T) {
 			{Time: date("2021-01-07"), Value: 0.0},
 		}
 
-		asset2 := returns.List{
+		asset2 := timetable.List{
 			{Time: date("2021-01-22"), Value: 0.1},
 			{Time: date("2021-01-21"), Value: 0.1},
 			{Time: date("2021-01-20"), Value: 0.1},
@@ -492,7 +492,7 @@ func TestSpec_Run_weightHistory(t *testing.T) {
 			{Time: date("2021-01-08"), Value: 0.1},
 			{Time: date("2021-01-07"), Value: 0.1},
 		}
-		assets := returns.NewTable([]returns.List{asset1, asset2})
+		assets := timetable.NewTable([]timetable.List{asset1, asset2})
 
 		alg := testAlgorithm()
 		windowFunc := backtestconfig.WindowNotSet.Function
@@ -509,8 +509,8 @@ func TestSpec_Run_weightHistory(t *testing.T) {
 		assert.Len(t, result.PolicyUpdateTimes, 0, "calculating the initial policy weights is not an update")
 	})
 
-	t.Run("daily rebalanced returns is the same when daily rebalancing", func(t *testing.T) {
-		asset1 := returns.List{
+	t.Run("daily rebalanced timetable is the same when daily rebalancing", func(t *testing.T) {
+		asset1 := timetable.List{
 			{Time: date("2021-01-22"), Value: 0.1},
 			{Time: date("2021-01-21"), Value: 0.1},
 			{Time: date("2021-01-20"), Value: 0.2},
@@ -529,7 +529,7 @@ func TestSpec_Run_weightHistory(t *testing.T) {
 			{Time: date("2021-01-06"), Value: 0.1},
 			{Time: date("2021-01-05"), Value: 0.3},
 		}
-		asset2 := returns.List{
+		asset2 := timetable.List{
 			{Time: date("2021-01-22"), Value: 0.2},
 			{Time: date("2021-01-21"), Value: 0.1},
 			{Time: date("2021-01-20"), Value: 0.1},
@@ -548,7 +548,7 @@ func TestSpec_Run_weightHistory(t *testing.T) {
 			{Time: date("2021-01-06"), Value: 0.3},
 			{Time: date("2021-01-05"), Value: 0.1},
 		}
-		assets := returns.NewTable([]returns.List{asset1, asset2})
+		assets := timetable.NewTable([]timetable.List{asset1, asset2})
 
 		alg := testAlgorithm()
 		windowFunc := backtestconfig.WindowNotSet.Function
@@ -564,7 +564,7 @@ func TestSpec_Run_weightHistory(t *testing.T) {
 	})
 }
 
-func randomWeights(_ context.Context, _ time.Time, _ returns.Table, currentWeights []float64) (targetWeights []float64, err error) {
+func randomWeights(_ context.Context, _ time.Time, _ timetable.Table, currentWeights []float64) (targetWeights []float64, err error) {
 	for i := range currentWeights {
 		currentWeights[i] = rand.Float64()
 	}
@@ -576,9 +576,9 @@ func date(str string) time.Time {
 	return d
 }
 
-type allocationFunction func(_ context.Context, _ time.Time, _ returns.Table, currentWeights []float64) (targetWeights []float64, err error)
+type allocationFunction func(_ context.Context, _ time.Time, _ timetable.Table, currentWeights []float64) (targetWeights []float64, err error)
 
-func (function allocationFunction) PolicyWeights(ctx context.Context, today time.Time, assets returns.Table, ws []float64) (targetWeights []float64, err error) {
+func (function allocationFunction) PolicyWeights(ctx context.Context, today time.Time, assets timetable.Table, ws []float64) (targetWeights []float64, err error) {
 	return function(ctx, today, assets, ws)
 }
 
