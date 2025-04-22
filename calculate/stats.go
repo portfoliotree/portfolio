@@ -110,3 +110,11 @@ func retainedAfterDrawdown(values []float64) []float64 {
 	}
 	return retained
 }
+
+func EffectiveNumberOfBets(weights []float64, risks []float64, correlations [][]float64) (float64, error) {
+	weightedAverageRisk := WeightedAverageRisk(weights, risks)
+	expectedPortfolioVol, _ := PortfolioVolatility(risks, weights, correlations)
+	annualizedWeightedAverageRisk := AnnualizeRisk(weightedAverageRisk, PeriodsPerYear)
+	portfolioRiskForUniqueNumberOfBets := AnnualizeRisk(expectedPortfolioVol, PeriodsPerYear)
+	return NumberOfBets(annualizedWeightedAverageRisk, portfolioRiskForUniqueNumberOfBets)
+}

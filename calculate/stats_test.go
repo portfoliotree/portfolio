@@ -122,3 +122,102 @@ func loadTestdataReturns(fileName string, columns int) ([][]float64, error) {
 	}
 	return data, nil
 }
+
+func TestEffectiveNumberOfBets(t *testing.T) {
+	tests := []struct {
+		name     string
+		weights  []float64
+		risks    []float64
+		correl   [][]float64
+		expected float64
+	}{
+		{
+			name: "no correlation",
+			weights: []float64{
+				0.5, 0.5,
+			},
+			risks: []float64{
+				0.2, 0.2,
+			},
+			correl: [][]float64{
+				{1.0, 0.0},
+				{0.0, 1.0},
+			},
+			expected: 2,
+		},
+		{
+			name: "some correlation",
+			weights: []float64{
+				0.5, 0.5,
+			},
+			risks: []float64{
+				0.2, 0.2,
+			},
+			correl: [][]float64{
+				{1.0, 0.5},
+				{0.5, 1.0},
+			},
+
+			expected: 1.3333333333333333,
+		},
+		{
+			name: "perfect correlation",
+			weights: []float64{
+				0.5, 0.5,
+			},
+			risks: []float64{
+				0.2, 0.2,
+			},
+			correl: [][]float64{
+				{1.0, 1.0},
+				{1.0, 1.0},
+			},
+
+			expected: 1,
+		},
+		{
+			name: "negative correlation",
+			weights: []float64{
+				0.5, 0.5,
+			},
+			risks: []float64{
+				0.2, 0.2,
+			},
+			correl: [][]float64{
+				{1.0, -0.75},
+				{-0.75, 1.0},
+			},
+
+			expected: 8,
+		},
+		{
+			name: "very negative correlation",
+			weights: []float64{
+				0.5, 0.5,
+			},
+			risks: []float64{
+				0.2, 0.2,
+			},
+			correl: [][]float64{
+				{1.0, -0.9999},
+				{-0.9999, 1.0},
+			},
+
+			expected: 2.0 / (1. - 0.9999), // ~2000
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			require.Len(t, test.weights, len(test.risks))
+			require.Len(t, test.correl, len(test.risks))
+			for i := range test.correl {
+				require.Len(t, test.correl[i], len(test.risks))
+			}
+
+			result, err := EffectiveNumberOfBets(test.weights, test.risks, test.correl)
+			require.NoError(t, err)
+			assert.InDelta(t, test.expected, result, 0.00001)
+		})
+	}
+}
