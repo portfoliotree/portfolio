@@ -145,6 +145,9 @@ func lookBackWindow(assetValues [][]float64, lookback TimeSubtracter, today time
 	}
 	last, first := today, lookback.Sub(today)
 	li, fi := table.RangeIndexes(last, first)
+	if fi == li && fi == table.NumberOfRows()-1 {
+		fi = len(table.Times())
+	}
 	ts := table.Times()
 	vs := table.ColumnValues()
 	for i := range assetValues {
