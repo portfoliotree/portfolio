@@ -53,7 +53,7 @@ func Run(ctx context.Context, end, start time.Time, assetReturns returns.Table,
 		updatedDailyWeights = slices.Clone(policyWeights)
 
 		backTestReturns,
-		dailyRebalancedReturns returns.List
+		dailyRebalancedReturns []float64
 		historicReturns        returns.Table
 		assetValues            = make([][]float64, assetReturns.NumberOfColumns())
 		assetReturnValuesToday = make([]float64, assetReturns.NumberOfColumns())
@@ -72,7 +72,8 @@ func Run(ctx context.Context, end, start time.Time, assetReturns returns.Table,
 			FinalPolicyWeights: make([]float64, assetReturns.NumberOfColumns()),
 		}
 
-		weights = make([]float64, assetReturns.NumberOfColumns()*assetReturns.NumberOfRows())
+		backTestTimes = make([]time.Time, 0, assetReturns.NumberOfRows())
+		weights       = make([]float64, assetReturns.NumberOfColumns()*assetReturns.NumberOfRows())
 	)
 
 	for today, i := start, 0; hasNext && !today.After(end) && i < assetReturns.NumberOfRows(); today, i = next, i+1 {
@@ -98,14 +99,9 @@ func Run(ctx context.Context, end, start time.Time, assetReturns returns.Table,
 			copy(result.FinalPolicyWeights, policyWeights)
 		}
 
-		backTestReturns = append(backTestReturns, returns.Return{
-			Time:  today,
-			Value: floats.Dot(updatedWeights, assetReturnValuesToday),
-		})
-		dailyRebalancedReturns = append(dailyRebalancedReturns, returns.Return{
-			Time:  today,
-			Value: floats.Dot(updatedDailyWeights, assetReturnValuesToday),
-		})
+		backTestTimes = append(backTestTimes, today)
+		backTestReturns = append(backTestReturns, floats.Dot(updatedWeights, assetReturnValuesToday))
+		dailyRebalancedReturns = append(dailyRebalancedReturns, floats.Dot(updatedDailyWeights, assetReturnValuesToday))
 
 		// calculate drift
 		for j := 0; historicReturns.NumberOfRows() > 0 && j < assetReturns.NumberOfColumns(); j++ {
@@ -126,6 +122,7 @@ func Run(ctx context.Context, end, start time.Time, assetReturns returns.Table,
 		copy(updatedDailyWeights, policyWeights)
 	}
 
+	slices.Reverse(backTestTimes)
 	slices.Reverse(backTestReturns)
 	slices.Reverse(dailyRebalancedReturns)
 	slices.Reverse(result.Weights)
@@ -134,7 +131,7 @@ func Run(ctx context.Context, end, start time.Time, assetReturns returns.Table,
 	result.RebalanceTimes = slices.Clip(result.RebalanceTimes)
 	slices.Reverse(result.PolicyUpdateTimes)
 	result.PolicyUpdateTimes = slices.Clip(result.PolicyUpdateTimes)
-	result.ReturnsTable = returns.NewTable([]returns.List{
+	result.ReturnsTable = returns.NewTableFromValues(backTestTimes, [][]float64{
 		backTestReturns,
 		dailyRebalancedReturns,
 	})
