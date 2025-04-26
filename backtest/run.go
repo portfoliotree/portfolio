@@ -20,11 +20,15 @@ type (
 	TriggerFunc func(t time.Time, currentWeights []float64) bool
 )
 
+type TimeSubtracter interface {
+	Sub(t time.Time) time.Time
+}
+
 // Run runs a portfolio back-test. It calls function parameters for policy updates and to check
 // when a policy update or rebalancing is required.
 func Run(ctx context.Context, end, start time.Time, assetReturns returns.Table,
 	alg PolicyWeightCalculator,
-	lookBackWindow WindowFunc,
+	lookback TimeSubtracter,
 	shouldCalculatePolicy,
 	shouldRebalanceAssetWeights TriggerFunc,
 ) (Result, error) {
@@ -37,7 +41,7 @@ func Run(ctx context.Context, end, start time.Time, assetReturns returns.Table,
 		return Result{}, err
 	}
 
-	firstPolicyDate, policyWeights, err := fetchPolicy(ctx, end, start, alg, assetReturns, lookBackWindow)
+	firstPolicyDate, policyWeights, err := fetchPolicy(ctx, end, start, alg, assetReturns, lookback)
 	if err != nil {
 		return Result{}, err
 	}
@@ -51,6 +55,7 @@ func Run(ctx context.Context, end, start time.Time, assetReturns returns.Table,
 		backTestReturns,
 		dailyRebalancedReturns returns.List
 		historicReturns        returns.Table
+		assetValues            = make([][]float64, assetReturns.NumberOfColumns())
 		assetReturnValuesToday = make([]float64, assetReturns.NumberOfColumns())
 
 		rebalanceCount, recalculatePolicyCount = 0, 0
@@ -66,6 +71,8 @@ func Run(ctx context.Context, end, start time.Time, assetReturns returns.Table,
 			PolicyUpdateTimes:  make([]time.Time, 0, assetReturns.NumberOfRows()),
 			FinalPolicyWeights: make([]float64, assetReturns.NumberOfColumns()),
 		}
+
+		weights = make([]float64, assetReturns.NumberOfColumns()*assetReturns.NumberOfRows())
 	)
 
 	for today, i := start, 0; hasNext && !today.After(end) && i < assetReturns.NumberOfRows(); today, i = next, i+1 {
@@ -73,7 +80,7 @@ func Run(ctx context.Context, end, start time.Time, assetReturns returns.Table,
 		scaleToUnitRange(updatedWeights)
 		scaleToUnitRange(updatedDailyWeights)
 
-		historicReturns = lookBackWindow(today, assetReturns)
+		historicReturns = lookBackWindow(assetValues, lookback, today, assetReturns)
 		assetReturnValuesToday = mostRecentValues(assetReturnValuesToday, historicReturns)
 
 		if shouldCalculatePolicy(today, updatedDailyWeights) && start != today {
@@ -112,7 +119,9 @@ func Run(ctx context.Context, end, start time.Time, assetReturns returns.Table,
 			result.RebalanceTimes = append(result.RebalanceTimes, today)
 		}
 
-		result.Weights = append(result.Weights, slices.Clone(updatedWeights))
+		ws := slices.Clip(weights[i*assetReturns.NumberOfColumns() : (i+1)*assetReturns.NumberOfColumns()])
+		copy(ws, updatedWeights)
+		result.Weights = append(result.Weights, ws)
 
 		copy(updatedDailyWeights, policyWeights)
 	}
@@ -131,6 +140,20 @@ func Run(ctx context.Context, end, start time.Time, assetReturns returns.Table,
 	})
 
 	return result, nil
+}
+
+func lookBackWindow(assetValues [][]float64, lookback TimeSubtracter, today time.Time, table returns.Table) returns.Table {
+	if lookback == nil {
+		return table
+	}
+	last, first := today, lookback.Sub(today)
+	li, fi := table.RangeIndexes(last, first)
+	ts := table.Times()
+	vs := table.ColumnValues()
+	for i := range assetValues {
+		assetValues[i] = vs[i][li:fi]
+	}
+	return returns.NewTableFromValues(ts[li:fi], assetValues)
 }
 
 func mostRecentValues(mostRecentValues []float64, table returns.Table) []float64 {
@@ -154,7 +177,7 @@ func ensureDatesAreWithinAssetTableRange(end, start time.Time, assetReturns retu
 	return end, start, nil
 }
 
-func fetchPolicy(ctx context.Context, end, start time.Time, alg PolicyWeightCalculator, assetReturns returns.Table, window WindowFunc) (time.Time, []float64, error) {
+func fetchPolicy(ctx context.Context, end, start time.Time, alg PolicyWeightCalculator, assetReturns returns.Table, lookback TimeSubtracter) (time.Time, []float64, error) {
 	ws := make([]float64, assetReturns.NumberOfColumns())
 
 	var historicReturns returns.Table
@@ -162,6 +185,8 @@ func fetchPolicy(ctx context.Context, end, start time.Time, alg PolicyWeightCalc
 	var (
 		next    time.Time
 		hasNext = true
+
+		assetValues = make([][]float64, assetReturns.NumberOfColumns())
 	)
 
 	for today := start; hasNext; today = next {
@@ -173,7 +198,7 @@ func fetchPolicy(ctx context.Context, end, start time.Time, alg PolicyWeightCalc
 		if today.After(end) {
 			break
 		}
-		historicReturns = window(today, assetReturns)
+		historicReturns = lookBackWindow(assetValues, lookback, today, assetReturns)
 
 		setFloat64Slice(ws, 0)
 

@@ -41,7 +41,7 @@ func benchmarkRun(b *testing.B, table returns.Table) {
 	end := table.LastTime()
 	start := table.FirstTime()
 	alg := new(allocation.EqualWeights)
-	lookback := backtestconfig.OneQuarterWindow.Function
+	lookback := backtestconfig.OneQuarterWindow
 	rebalance := backtestconfig.Daily()
 	updatePolicyWeights := backtestconfig.Monthly()
 	ctx := context.Background()

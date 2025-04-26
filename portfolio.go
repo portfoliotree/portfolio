@@ -123,7 +123,7 @@ func (pf *Specification) BacktestWithStartAndEndTime(ctx context.Context, start,
 		}
 	}
 	return backtest.Run(ctx, end, start, assets, alg,
-		pf.Policy.WeightsAlgorithmLookBack.Function,
+		pf.Policy.WeightsAlgorithmLookBack,
 		pf.Policy.WeightsUpdatingInterval.CheckFunction(),
 		pf.Policy.RebalancingInterval.CheckFunction(),
 	)

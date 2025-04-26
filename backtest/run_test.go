@@ -34,7 +34,7 @@ func TestSpec_Run(t *testing.T) {
 			{Time: date("2021-01-01"), Value: 0.1},
 		}})
 		alg := testAlgorithm()
-		windowFunc := backtestconfig.WindowNotSet.Function
+		windowFunc := backtestconfig.WindowNotSet
 		rebalanceIntervalFunc := backtestconfig.IntervalDaily.CheckFunction()
 		policyUpdateIntervalFunc := backtestconfig.IntervalDaily.CheckFunction()
 
@@ -58,7 +58,7 @@ func TestSpec_Run(t *testing.T) {
 				{Time: date("2021-01-01"), Value: 0.1},
 			},
 		})
-		windowFunc := backtestconfig.WindowNotSet.Function
+		windowFunc := backtestconfig.WindowNotSet
 		rebalanceIntervalFunc := backtestconfig.IntervalDaily.CheckFunction()
 		policyUpdateIntervalFunc := backtestconfig.IntervalDaily.CheckFunction()
 
@@ -80,7 +80,7 @@ func TestSpec_Run(t *testing.T) {
 	})
 	t.Run("end date does not have a return", func(t *testing.T) {
 		alg := testAlgorithm()
-		windowFunc := backtestconfig.WindowNotSet.Function
+		windowFunc := backtestconfig.WindowNotSet
 		rebalanceIntervalFunc := backtestconfig.IntervalDaily.CheckFunction()
 		policyUpdateIntervalFunc := backtestconfig.IntervalDaily.CheckFunction()
 
@@ -98,7 +98,7 @@ func TestSpec_Run(t *testing.T) {
 		assets := returns.Table{}
 
 		alg := testAlgorithm()
-		windowFunc := backtestconfig.WindowNotSet.Function
+		windowFunc := backtestconfig.WindowNotSet
 		rebalanceIntervalFunc := backtestconfig.IntervalDaily.CheckFunction()
 		policyUpdateIntervalFunc := backtestconfig.IntervalDaily.CheckFunction()
 
@@ -112,7 +112,7 @@ func TestSpec_Run(t *testing.T) {
 
 	t.Run("when there is one asset", func(t *testing.T) {
 		alg := testAlgorithm()
-		windowFunc := backtestconfig.OneDayWindow.Function
+		windowFunc := backtestconfig.OneDayWindow
 		rebalanceIntervalFunc := backtestconfig.IntervalDaily.CheckFunction()
 		policyUpdateIntervalFunc := backtestconfig.IntervalDaily.CheckFunction()
 
@@ -134,7 +134,7 @@ func TestSpec_Run(t *testing.T) {
 
 	t.Run("when called repeatedly", func(t *testing.T) {
 		alg := testAlgorithm()
-		windowFunc := backtestconfig.OneDayWindow.Function
+		windowFunc := backtestconfig.OneDayWindow
 		rebalanceIntervalFunc := backtestconfig.IntervalDaily.CheckFunction()
 		policyUpdateIntervalFunc := backtestconfig.IntervalDaily.CheckFunction()
 
@@ -184,7 +184,7 @@ func TestSpec_Run(t *testing.T) {
 			<-ctx.Done()
 			return ws, ctx.Err()
 		})
-		windowFunc := backtestconfig.OneDayWindow.Function
+		windowFunc := backtestconfig.OneDayWindow
 		rebalanceIntervalFunc := backtestconfig.IntervalDaily.CheckFunction()
 		policyUpdateIntervalFunc := backtestconfig.IntervalDaily.CheckFunction()
 
@@ -215,7 +215,7 @@ func TestSpec_Run(t *testing.T) {
 		assets := returns.NewTable([]returns.List{asset1, asset2})
 
 		alg := testAlgorithm()
-		windowFunc := backtestconfig.OneDayWindow.Function
+		windowFunc := backtestconfig.OneDayWindow
 		rebalanceIntervalFunc := backtestconfig.IntervalDaily.CheckFunction()
 		policyUpdateIntervalFunc := backtestconfig.IntervalDaily.CheckFunction()
 
@@ -255,7 +255,7 @@ func TestSpec_Run(t *testing.T) {
 			}
 			return fallback.PolicyWeights(ctx, t, assetReturns, currentWeights)
 		})
-		windowFunc := backtestconfig.WindowNotSet.Function
+		windowFunc := backtestconfig.WindowNotSet
 		rebalanceIntervalFunc := backtestconfig.IntervalDaily.CheckFunction()
 		policyUpdateIntervalFunc := backtestconfig.IntervalDaily.CheckFunction()
 
@@ -292,7 +292,7 @@ func TestSpec_Run(t *testing.T) {
 		assets := returns.NewTable([]returns.List{asset1, asset2})
 
 		alg := testAlgorithm()
-		windowFunc := backtestconfig.OneWeekWindow.Function
+		windowFunc := backtestconfig.OneWeekWindow
 		rebalanceIntervalFunc := backtestconfig.IntervalDaily.CheckFunction()
 		policyUpdateIntervalFunc := backtestconfig.IntervalDaily.CheckFunction()
 
@@ -364,7 +364,7 @@ func TestSpec_Run(t *testing.T) {
 			return (&allocation.EqualWeights{}).PolicyWeights(context.Background(), tm, assetReturns, currentWeights)
 		})
 
-		windowFunc := backtestconfig.OneWeekWindow.Function
+		windowFunc := backtestconfig.OneWeekWindow
 		rebalanceIntervalFunc := backtestconfig.IntervalDaily.CheckFunction()
 		policyUpdateIntervalFunc := backtestconfig.IntervalWeekly.CheckFunction()
 
@@ -405,7 +405,7 @@ func TestSpec_Run_weightHistory(t *testing.T) {
 		assets := returns.NewTable([]returns.List{asset})
 
 		alg := allocationFunction(randomWeights)
-		windowFunc := backtestconfig.WindowNotSet.Function
+		windowFunc := backtestconfig.WindowNotSet
 		rebalanceIntervalFunc := backtestconfig.IntervalDaily.CheckFunction()
 		policyUpdateIntervalFunc := backtestconfig.IntervalDaily.CheckFunction()
 
@@ -495,7 +495,7 @@ func TestSpec_Run_weightHistory(t *testing.T) {
 		assets := returns.NewTable([]returns.List{asset1, asset2})
 
 		alg := testAlgorithm()
-		windowFunc := backtestconfig.WindowNotSet.Function
+		windowFunc := backtestconfig.WindowNotSet
 		rebalanceIntervalFunc := backtestconfig.IntervalWeekly.CheckFunction()
 		policyUpdateIntervalFunc := backtestconfig.IntervalMonthly.CheckFunction()
 
@@ -551,7 +551,7 @@ func TestSpec_Run_weightHistory(t *testing.T) {
 		assets := returns.NewTable([]returns.List{asset1, asset2})
 
 		alg := testAlgorithm()
-		windowFunc := backtestconfig.WindowNotSet.Function
+		windowFunc := backtestconfig.WindowNotSet
 		rebalanceIntervalFunc := backtestconfig.IntervalDaily.CheckFunction()
 		policyUpdateIntervalFunc := backtestconfig.IntervalWeekly.CheckFunction()
 
