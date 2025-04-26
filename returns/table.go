@@ -38,6 +38,17 @@ func NewTable(list []List) Table {
 	return table
 }
 
+// NewTableFromValues should only be used when you are confident the data is clean.
+// It does no checks and table methods may panic if the data is not appropriately shaped/ordered.
+// The time at times[0] must be the last time. The value at times[len(times)-1] the first time.
+// The values must be an array of arrays, where each inner array is the same length as times.
+func NewTableFromValues(times []time.Time, values [][]float64) Table {
+	return Table{
+		times:  times,
+		values: values,
+	}
+}
+
 func (table *Table) UnmarshalBSON(buf []byte) error {
 	var enc encodedTable
 	err := bson.Unmarshal(buf, &enc)
