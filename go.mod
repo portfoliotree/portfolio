@@ -6,7 +6,7 @@ toolchain go1.24.0
 
 require (
 	github.com/portfoliotree/round v0.1.0
-	github.com/stretchr/testify v1.10.0
+	github.com/stretchr/testify v1.11.1
 	go.mongodb.org/mongo-driver v1.17.3
 	gonum.org/v1/gonum v0.16.0
 	gopkg.in/yaml.v3 v3.0.1
